@@ -23,25 +23,15 @@ This demonstration contains the following examples:
 
 #### Tweet Volume and Hashtag Analysis
 
-*(youtube embed)*
+[<img src="tweet_volume.png">](https://www.youtube.com/watch?v=6p1lbmdrKW8)
 
 > In this video we introduce you to using open-source Python libraries, Blaze and Bokeh, for analyzing Twitter data. By using publicly available data, we show you how to display data, such as tweet volume and top hashtag by date.
 
-1. [Blaze-PySpark locally](tweet-volume-local-spark.ipynb)  
-1. [Blaze-PySpark cluster](tweet-volume-cluster-spark.ipynb)
- 
 #### Geographic Visualization of Tweet Locations
 
-*(youtube embed)*
+[<img src="tweet_geovis.png">](https://www.youtube.com/watch?v=kY3Uu9A20Jw)
 
 > This video is follow up to the "Visualizing Twitter Data with Blaze and Bokeh Introduction" video. In this video, we plot tweets on a world map, show you how to filter by date and/or user, and how to display tweets on top of Google maps.
-
-1. [Static world map with bokeh.plotting](tweet-worldmap-static-bcolz.ipynb#2.1-Static-world-map-with-bokeh.plotting)  
-1. [Static world map with Glyphs](tweet-worldmap-static-bcolz.ipynb#2.2-Static-world-map-with-Glyphs)  
-1. [World map - Tweets location](tweet-worldmap-location-bcolz.ipynb)  
-1. [World map - Tweets User location](tweet-worldmap-user-bcolz.ipynb)  
-1. [World map - Tweets User location with GMap](tweet-worldmap-gmap-bcolz.ipynb)  
-1. [World map - Abstract Rendering](abstract_rendering)
 
 ## Employment Dataset
 
@@ -53,12 +43,12 @@ This demonstration contains the following examples:
 
 #### [Dynamic Exploration of Large Datasets](./employment/)
 
-*(youtube embed)*
+[<img src="emp_exploration.png">](https://www.youtube.com/watch?v=8QuQQFzQfzM)
 
 > This video shows a demonstration of using Blaze and Bokeh to explore a large dataset. A 40 GB set of text files is pre-processed with Blaze, then we compute over this data with Blaze again and visualize it with Bokeh, providing interactive plots in the browser.
 
 #### Data Migration with Blaze and Realtime Monitoring with Bokeh
 
-*(youtube embed)*
+[<img src="emp_migration.png">](https://www.youtube.com/watch?v=oU6f7PRAGwc)
 
 > In this video, we use Blaze to migrate data from text files to SQL databases, with a couple plots in Bokeh that track the progress of the transfer, and use Blaze to query the database for latitude-longitude values, and a world map of the same.
