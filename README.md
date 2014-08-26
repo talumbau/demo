@@ -17,7 +17,7 @@
 <td style="border:0px">  <a href="abstract_rendering"><img src="images/tweet-AR.png" width=250px></a>  <span class="raw-html"></span></td>
 </tbody></table>
 
-This dataset was collected with a focus on the richness of data fields collected from Twitter from February 2012 to May 2013. All tweets were collected in Europe, Middle East, Africa, Australia, and Asia. It only includes tweets gathered from the streaming API which have high fidelity geospatial information associated with them. In addition, translation, transliteration, sentiment, referenced tweets, mentioned user ids, and other rich metadata are included in these records for use.
+The Twitter dataset was collected from February 2012 to May 2013. All collected tweets were sourced in Europe, the Middle East, Africa, Australia, and Asia. Some of the tweet records include high-fidelity geospatial information, resolved to lat-lon coordinates. In addition, translation, transliteration, sentiment, referenced tweets, mentioned user IDs, and other rich metadata are included in these records.
 
 This demonstration contains the following examples:
 
