@@ -12,7 +12,7 @@ This demonstration contains the following examples:
 
 > In this video we introduce you to using open-source Python libraries, Blaze and Bokeh, for analyzing Twitter data. By using publicly available data, we show you how to display data, such as tweet volume and top hashtag by date.
 
-#### Mapping Twitter Data with Blaze and Bokeh](./twitter/mapping)
+#### [Mapping Twitter Data with Blaze and Bokeh](./twitter/mapping)
 
 [<img src="images/tweet_geovis.png">](https://www.youtube.com/watch?v=kY3Uu9A20Jw)
 
