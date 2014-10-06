@@ -1,0 +1,4 @@
+python==3.4
+numba==0.14
+ipython-notebook
+jsanimation
