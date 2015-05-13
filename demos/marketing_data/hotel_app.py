@@ -48,7 +48,6 @@ def get_hotel_data():
 
     dta = dta.dropna(axis=0)
 
-    #dtaustin = dta[dta['city'] == 'Austin']
     return dta, revs
 
 hdata, hrevs = get_hotel_data()
@@ -163,6 +162,8 @@ class HotelApp(VBox):
         print "seeing if selected!"
         if selected:
             pandas_df = pandas_df.iloc[selected, :]
+        else:
+            pandas_df = pandas_df.iloc[0:0, :]
         return pandas_df
 
     def write_text(self):
@@ -205,7 +206,7 @@ class HotelApp(VBox):
         plot = GMapPlot(
             x_range=x_range, y_range=y_range,
             map_options=map_options,
-            title = "Austin",
+            title = "Hotel Review Explorer",
             plot_width=800,
             plot_height=600
         )
@@ -246,13 +247,13 @@ class HotelApp(VBox):
         x_rr = Range1d(start=0.0, end=6.0)
         y_rr = Range1d(start=0.0, end=10.0)
         TOOLS = "box_select,lasso_select"
-        bar_plot = figure(tools=TOOLS, width=300, height=400, x_range=x_rr, y_range=y_rr, title=None)
+        bar_plot = figure(tools=TOOLS, width=500, height=400, x_range=x_rr, y_range=y_rr, title="Average Rating")
 
         #x's and y's based on selected_df
         sdf = self.selected_df[['names', 'ratings']]
 
-        xvals = [2.0*i + 0.5 for i in range(0, len(sdf['names']))]
-        rightvals = [2.0*i + 1.5 for i in range(0, len(sdf['names']))]
+        xvals = [1.0*i + 0.5 for i in range(0, len(sdf['names']))]
+        rightvals = [1.0*i + 0.85 for i in range(0, len(sdf['names']))]
         ratings = [r for r in sdf['ratings']]
         bottoms = [0]*len(ratings)
         y_text = [y + 1.0 for y in ratings]
@@ -261,7 +262,7 @@ class HotelApp(VBox):
         print "all_names ", all_names
 
         #bar_plot.circle(xvals, ratings, size=12)
-        bar_plot.quad(xvals, rightvals, ratings, bottoms)
+        bar_plot.quad(xvals, rightvals, ratings, bottoms, fill="teal")
 
         #glyph = Text(x=xvals, y=y_text, text=sdf['names'], angle=pi/4,
                     #text_align="left", text_baseline="middle")
@@ -272,15 +273,16 @@ class HotelApp(VBox):
         for g in glyphs:
             bar_plot.add_glyph(g)
 
-        bar_plot.xaxis.major_tick_line_color = "firebrick"
-        bar_plot.xaxis.major_tick_line_width = 3
-        bar_plot.xaxis.minor_tick_line_color = "orange"
+        bar_plot.xaxis.major_tick_line_color = None
+        bar_plot.xaxis.minor_tick_line_color = None
+        #bar_plot.xaxis.major_tick_line_width = 3
+        #bar_plot.xaxis.minor_tick_line_color = "orange"
 
         bar_plot.yaxis.minor_tick_line_color = None
 
-        bar_plot.axis.major_tick_out = 10
-        bar_plot.axis.minor_tick_in = -3
-        bar_plot.axis.minor_tick_out = 8
+        #bar_plot.axis.major_tick_out = 10
+        #bar_plot.axis.minor_tick_in = -3
+        #bar_plot.axis.minor_tick_out = 8
 
         bar_plot.xgrid.grid_line_color = None
         bar_plot.ygrid.grid_line_color = None

@@ -115,7 +115,7 @@ def read_data(num_lines=-1):
             for c in static_cols:
                 columns[c].append(h[c])
 
-            ave = ave_rating(h['reviews'])
+            ave = scale_rating(ave_rating(h['reviews']))
             columns['ave_review'].append(ave)
             columns['num_reviews'].append(len(h['reviews']))
             z = normalize_zip(h['postalCode'])
