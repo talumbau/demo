@@ -53,6 +53,11 @@ good_ones = 0
 
 all_ratings = []
 
+names = []
+lats = []
+longs = []
+city = []
+
 def normalize_county(c):
     c = c.lower()
     c = c.replace("saint", "st.")
@@ -118,13 +123,14 @@ def ave_rating(reviews):
     else:
         return None
 
-def count(lines):
+def count(lines, names, lats, longs, city):
     global has_reviews
     global has_postalCode
     global good_ones
     global has_ratings
     for h in lines:
         has_location = False
+        has_latlon = False
         if 'reviews' in h:
             has_reviews += 1
             ave = ave_rating(h['reviews'])
@@ -134,7 +140,6 @@ def count(lines):
                 all_ratings.append(ave)
         if 'postalCode' in h:
             has_postalCode += 1
-            #us_result = geonameszip.lookup_postal_code(h['postalCode'], 'US')
             z = normalize_zip(h['postalCode'])
             if z in zip_to_county:
                 county = zip_to_county[z]
@@ -152,11 +157,19 @@ def count(lines):
 
             else:
                 print "couldn't find: ", z
+        if 'lat' in h and 'long' in h:
+            names.append(h['name'])
+            lats.append(float(h['lat']))
+            longs.append(float(h['long']))
+
+        if 'city' in h:
+            city.append(h['city'])
+            
         if 'reviews' in h and 'postalCode' in h and has_location:
             good_ones += 1
 
-count(lines1)
-count(lines2)
+count(lines1, names, lats, longs, city)
+count(lines2, names, lats, longs, city)
 
 print "has_reviews: ", has_reviews
 print "has_ratings: ", has_ratings
@@ -165,41 +178,4 @@ print "good_ones: ", good_ones
 print "total: ", len(lines1) + len(lines2)
 print "ratings per county", len(ratings_per_county)
 
-county_colors = []
-for county_id in us_counties:
-    if us_counties[county_id]["state"] in ["ak", "hi", "pr", "gu", "vi", "mp", "as"]:
-        continue
-    try:
-        all_ratings = ratings_per_county[county_id]
-        print "all ratings", all_ratings
-        if all_ratings:
-            ave_for_county = scale_rating(numpy.mean(all_ratings))
-            idx = int(6./5.*ave_for_county - 1.0)
-            county_colors.append(colors[idx])
-        else:
-            county_colors.append("black")
-    except KeyError:
-        county_colors.append("black")
-
-output_file("choropleth_hotels.html", title="hotel ratings example")
-
-p = figure(title="Average Hotel Ratings", toolbar_location="left",
-    plot_width=1100, plot_height=700)
-
-p.patches(county_xs, county_ys, fill_color=county_colors, fill_alpha=0.7,
-    line_color="white", line_width=0.5)
-p.patches(state_xs, state_ys, fill_alpha=0.0,
-    line_color="#884444", line_width=2)
-
-show(p)
-
-"""distributions = OrderedDict(ratings=all_ratings)
-# create a pandas data frame from the dict
-df = pd.DataFrame(distributions)
-distributions = df.to_dict()
-output_file("ratings_hist.html")
-
-hist = Histogram(df, bins=50, legend=True)
-
-show(hist)"""
 
