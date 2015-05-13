@@ -160,6 +160,7 @@ class HotelApp(VBox):
     def selected_df(self):
         pandas_df = self.df
         selected = self.source.selected
+        print "seeing if selected!"
         if selected:
             pandas_df = pandas_df.iloc[selected, :]
         return pandas_df
@@ -285,16 +286,6 @@ class HotelApp(VBox):
         bar_plot.ygrid.grid_line_color = None
         self.bar_plot = bar_plot
 
-    @property
-    def selected_df(self):
-        print "in selected df"
-        pandas_df = self.df
-        print "pandas df.columns ", pandas_df.columns
-        selected = self.source.selected
-        if selected:
-            pandas_df = pandas_df.iloc[selected, :]
-        return pandas_df
-
     def set_children(self):
         self.children = [self.totalbox]
         self.totalbox.children = [self.mainrow, self.bottomrow]
@@ -328,7 +319,7 @@ class HotelApp(VBox):
 
     def selection_change(self, obj, attrname, old, new):
         self.write_text()
-        self.make_source()
+        #self.make_source()
         self.make_bar_plot()
         self.set_children()
         curdoc().add(self)
