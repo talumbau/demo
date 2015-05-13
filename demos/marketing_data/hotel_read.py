@@ -124,15 +124,7 @@ def read_data(num_lines=-1):
             columns['state'].append(zip_to_state[z])
             columns['id'].append(count)
             the_reviews[count] = [r['text'] for r in h['reviews'] if 'text' in r]
-            """allrevs = []
-            for r in h['reviews']:
-                if 'text' not in r:
-                    import pdb;pdb.set_trace()
-                    print "what?"
-                else:
-                    allrevs.append(r['text'])
-            the_reviews[count] = allrevs"""
-            
+           
 
         if not unlimited:
             if count > num_lines:

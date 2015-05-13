@@ -40,8 +40,11 @@ def get_hotel_data():
                         'city':dta['city'],
                         'ratings':dta['ave_review'],
                         'fill':['yellow'] * len(dta['city']),
+                        'fill2':['purple'] * len(dta['city']),
+                        'state':dta['state'],
                         'num_reviews':dta['num_reviews']})
 
+    dta = dta.dropna(axis=0)
 
     #dtaustin = dta[dta['city'] == 'Austin']
     return dta 
@@ -146,8 +149,8 @@ class HotelApp(VBox):
 
         x_range = Range1d()
         y_range = Range1d()
-        #map_options = GMapOptions(lat=39.8282, lng=-98.5795, zoom=4)
-        map_options = GMapOptions(lat=30.2861, lng=-97.7394, zoom=15)
+        map_options = GMapOptions(lat=39.8282, lng=-98.5795, zoom=4)
+        #map_options = GMapOptions(lat=30.2861, lng=-97.7394, zoom=15)
         plot = GMapPlot(
             x_range=x_range, y_range=y_range,
             map_options=map_options,
@@ -271,7 +274,10 @@ class HotelApp(VBox):
     @property
     def df(self):
         #return get_hotel_data()
-        return return_hotel_data()
+        thedf = return_hotel_data()
+        thedf2 = get_data()
+        import pdb;pdb.set_trace()
+        return thedf
 
     def selection_change(self, obj, attrname, old, new):
         self.make_bar_plot()
