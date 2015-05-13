@@ -27,7 +27,8 @@ from bokeh.plotting import figure, curdoc
 from bokeh.properties import String, Instance
 from bokeh.server.app import bokeh_app
 from bokeh.server.utils.plugins import object_page
-from bokeh.models.widgets import HBox, VBox, VBoxForm, PreText, Select
+from bokeh.models.widgets import HBox, VBox, VBoxForm, PreText, Paragraph, Select
+from bokeh.models.renderers import GlyphRenderer
 
 
 
@@ -42,17 +43,22 @@ def get_hotel_data():
                         'fill':['yellow'] * len(dta['city']),
                         'fill2':['purple'] * len(dta['city']),
                         'state':dta['state'],
+                        'id':dta['id'],
                         'num_reviews':dta['num_reviews']})
 
     dta = dta.dropna(axis=0)
 
     #dtaustin = dta[dta['city'] == 'Austin']
-    return dta 
+    return dta, revs
 
-hdata = get_hotel_data()
+hdata, hrevs = get_hotel_data()
 
 def return_hotel_data():
     return hdata
+
+def return_hotel_reviews():
+    return hrevs
+
 
 def get_data():
     n = ['AAA', 'BBB', 'CCC']
@@ -75,8 +81,8 @@ class HotelApp(VBox):
     extra_generated_classes = [["HotelApp", "HotelApp", "VBox"]]
     jsmodel = "VBox"
 
-    # text statistics
-    #pretext = Instance(PreText)
+    # text reviews
+    pretext = Instance(Paragraph)
 
     # input
     selectr = Instance(Select)
@@ -90,8 +96,9 @@ class HotelApp(VBox):
 
     # layout boxes
     mainrow = Instance(HBox)
-    #histrow = Instance(HBox)
+    bottomrow = Instance(HBox)
     statsbox = Instance(VBox)
+    totalbox = Instance(VBox)
 
     # inputs
     #ticker1_select = Instance(Select)
@@ -99,11 +106,17 @@ class HotelApp(VBox):
     #input_box = Instance(VBoxForm)
 
     def make_inputs(self):
+        with open("states.csv") as f:
+            states = [line.strip().split(',') for line in f.readlines()]
+
         self.selectr = Select(
             name='states',
-            value='Texas',
-            options=['Texas', 'Illinois', 'California', 'New York', 'Ohio']
+            value='Choose A State',
+            options=[s[1] for s in states] + ['Choose A State']
         )
+
+    def make_outputs(self):
+        self.pretext = Paragraph(text="", width=800)
 
     def __init__(self, *args, **kwargs):
         super(HotelApp, self).__init__(*args, **kwargs)
@@ -121,13 +134,22 @@ class HotelApp(VBox):
         # create layout widgets
         obj = cls()
         obj.mainrow = HBox()
+        obj.bottomrow = HBox()
         obj.statsbox = VBox()
+        obj.totalbox = VBox()
 
         obj.make_inputs()
+        obj.make_outputs()
 
         # outputs
-        #obj.pretext = PreText(text="", width=500)
+        #obj.pretext = Paragraph(text="", width=500)
         obj.make_source()
+        lat=39.8282
+        lng=-98.5795
+        zoom=6
+        xr = Range1d()
+        yr = Range1d()
+        #obj.make_plots(lat, lng, zoom, xr, yr)
         obj.make_plots()
 
         # layout
@@ -142,14 +164,42 @@ class HotelApp(VBox):
             pandas_df = pandas_df.iloc[selected, :]
         return pandas_df
 
+    def write_text(self):
+        sdf = self.selected_df
+        ids = sdf['id'].values
+        revs = return_hotel_reviews()
+        rev = "Review #1: \n"
+        rev += revs[ids[0]][0]
+        print "rev is ", rev
+        self.pretext.text = rev
+
     def make_source(self):
         self.source = ColumnDataSource(data=self.df)
+        """if self.plot:
+            print "here we are!!"
+            for r in self.plot.renderers:
+                if isinstance(r, GlyphRenderer):
+                    print "got one!!"
+                    r.data_source = self.source
+            #self.plot.source = self.source"""
 
     def make_plots(self):
+        self.create_plots()
+        self.populate_glyphs()
+        self.make_bar_plot()
 
-        x_range = Range1d()
-        y_range = Range1d()
-        map_options = GMapOptions(lat=39.8282, lng=-98.5795, zoom=4)
+    #def make_plots(self, lat, lng, zoom, xr, yr):
+    #def make_plots(self):
+    def create_plots(self):
+        lat=39.8282
+        lng=-98.5795
+        zoom=6
+        xr = Range1d()
+        yr = Range1d()
+        x_range = xr
+        y_range = yr
+        #map_options = GMapOptions(lat=39.8282, lng=-98.5795, zoom=6)
+        map_options = GMapOptions(lat=lat, lng=lng, zoom=zoom)
         #map_options = GMapOptions(lat=30.2861, lng=-97.7394, zoom=15)
         plot = GMapPlot(
             x_range=x_range, y_range=y_range,
@@ -159,13 +209,11 @@ class HotelApp(VBox):
             plot_height=600
         )
         plot.map_options.map_type="hybrid"
-        circle2 = Circle(x="lon", y="lat", size=10, fill_color="fill2", line_color="black")
-        circle = Circle(x="lon", y="lat", size=10, fill_color="fill", line_color="black")
-                        #nonselection_fill_color="#FFFF00", nonselection_fill_alpha=1)
-        #print "source is ", self.source['lon'], self.source['lat'], self.source['fill']
-        plot.add_glyph(self.source, circle, nonselection_glyph=circle2)
-        #plot.add_glyph(self.source, circle)
-        #rndr = plot.renderers[-1]
+        xaxis = LinearAxis(axis_label="lon", major_tick_in=0, formatter=NumeralTickFormatter(format="0.000"))
+        plot.add_layout(xaxis, 'below')
+        yaxis = LinearAxis(axis_label="lat", major_tick_in=0, formatter=PrintfTickFormatter(format="%.3f"))
+        plot.add_layout(yaxis, 'left')
+
         pan = PanTool()
         wheel_zoom = WheelZoomTool()
         box_select = BoxSelectTool()
@@ -178,15 +226,19 @@ class HotelApp(VBox):
         hover = HoverTool(tooltips=tooltips)
         tap = TapTool()
         plot.add_tools(pan, wheel_zoom, box_select, hover, tap)
-        xaxis = LinearAxis(axis_label="lon", major_tick_in=0, formatter=NumeralTickFormatter(format="0.000"))
-        plot.add_layout(xaxis, 'below')
-        yaxis = LinearAxis(axis_label="lat", major_tick_in=0, formatter=PrintfTickFormatter(format="%.3f"))
-        plot.add_layout(yaxis, 'left')
-        #overlay = BoxSelectionOverlay(tool=box_select)
-        #plot.add_layout(overlay)
-
+        overlay = BoxSelectionOverlay(tool=box_select)
+        plot.add_layout(overlay)
+        #plot.add_glyph(self.source, circle)
         self.plot = plot
-        self.make_bar_plot()
+
+    def populate_glyphs(self):
+        self.plot.renderers=[]
+        circle2 = Circle(x="lon", y="lat", size=10, fill_color="fill2", line_color="black")
+        circle = Circle(x="lon", y="lat", size=10, fill_color="fill", line_color="black")
+        #print "source is ", self.source['lon'], self.source['lat'], self.source['fill']
+        self.plot.add_glyph(self.source, circle, nonselection_glyph=circle2)
+        #rndr = plot.renderers[-1]
+
 
     def make_bar_plot(self):
         # create a new plot
@@ -244,18 +296,11 @@ class HotelApp(VBox):
         return pandas_df
 
     def set_children(self):
-        self.children = [self.mainrow]
+        self.children = [self.totalbox]
+        self.totalbox.children = [self.mainrow, self.bottomrow]
         self.mainrow.children = [self.plot, self.statsbox]
         self.statsbox.children = [self.selectr, self.bar_plot]
-
-    def input_change(self, obj, attrname, old, new):
-        if obj == self.selectr:
-            self.select_val = new
-
-        self.make_source()
-        self.make_plots()
-        self.set_children()
-        curdoc().add(self)
+        self.bottomrow.children = [self.pretext]
 
 
     def setup_events(self):
@@ -264,23 +309,48 @@ class HotelApp(VBox):
             self.source.on_change('selected', self, 'selection_change')
         if self.selectr:
             self.selectr.on_change('value', self, 'input_change')
+            #self.selectr.on_change('value', self, 'selection_change')
 
-    def selection_change(self, obj, attrname, old, new):
-        self.make_stats()
-        self.hist_plots()
+    """def selection_change(self, obj, attrname, old, new):
+        self.write_text()
         self.set_children()
-        curdoc().add(self)
+        curdoc().add(self)"""
 
     @property
     def df(self):
         #return get_hotel_data()
         thedf = return_hotel_data()
-        thedf2 = get_data()
-        import pdb;pdb.set_trace()
-        return thedf
+        if self.selectr.value is None or self.selectr.value == 'Choose A State':
+            return thedf
+        else:
+            newdf = thedf[thedf['state'] == self.selectr.value]
+            return newdf
 
     def selection_change(self, obj, attrname, old, new):
+        self.write_text()
+        self.make_source()
         self.make_bar_plot()
+        self.set_children()
+        curdoc().add(self)
+
+    def input_change(self, obj, attrname, old, new):
+        #if obj == self.selectr:
+            #self.select_val = new
+        self.make_source()
+        self.populate_glyphs()
+        #self.make_plots()
+        #self.make_bar_plot()
+        print "lat: ", self.plot._map_options.lat
+        print "lng: ", self.plot._map_options.lng
+        print "zoom: ", self.plot._map_options.zoom
+        print "xrange: ", self.plot.x_range
+        print "yrange: ", self.plot.y_range
+
+        """self.make_plots(self.plot._map_options.lat,
+                        self.plot._map_options.lng,
+                        self.plot._map_options.zoom,
+                        self.plot.x_range,
+                        self.plot.y_range,)"""
         self.set_children()
         curdoc().add(self)
 

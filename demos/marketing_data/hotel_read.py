@@ -50,7 +50,6 @@ def normalize_rating(r):
         if r:
             return numpy.mean(map(float, r))
         else:
-            print "broken: ", r
             return None
 
     if idx > -1:
@@ -111,7 +110,6 @@ def read_data(num_lines=-1):
     for count, h in enumerate(alllines):
 
         checks = [c in h for c in static_cols]
-        print "checks are: ", checks
         has_all = all(checks)
         if has_all and state_is_good(h) and len(h['reviews']) > 0:
             for c in static_cols:
