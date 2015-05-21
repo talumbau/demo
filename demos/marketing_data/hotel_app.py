@@ -14,9 +14,10 @@ from os.path import dirname, join, splitext
 import numpy as np
 import pandas as pd
 from numpy import pi
+from read_counties import get_some_counties
 
 from bokeh.models import (ColumnDataSource, Plot,
-    GMapPlot, Range1d, LinearAxis,
+    GMapPlot, Range1d, LinearAxis, Patch, Patches,
     PanTool, WheelZoomTool, BoxSelectTool, HoverTool,
     BoxSelectionOverlay, GMapOptions, FactorRange, TapTool,
     NumeralTickFormatter, PrintfTickFormatter,
@@ -27,8 +28,13 @@ from bokeh.plotting import figure, curdoc
 from bokeh.properties import String, Instance
 from bokeh.server.app import bokeh_app
 from bokeh.server.utils.plugins import object_page
-from bokeh.models.widgets import HBox, VBox, VBoxForm, PreText, Paragraph, Select
+from bokeh.models.widgets import (HBox, VBox, VBoxForm, PreText, Paragraph, Select,
+                                  RadioGroup)
+
 from bokeh.models.renderers import GlyphRenderer
+
+def radio_group_handler(active):
+    print "radio group handler %s" % active
 
 
 
@@ -59,6 +65,8 @@ def return_hotel_reviews():
     return hrevs
 
 
+colors = ["#F1EEF6", "#D4B9DA", "#C994C7", "#DF65B0", "#DD1C77", "#980043"]
+
 def get_data():
     n = ['AAA', 'BBB', 'CCC']
     lat=[30.2861, 30.2855, 30.2869]
@@ -76,6 +84,44 @@ def get_data():
                          'num_reviews':num_reviews})
 
 
+class DummyApp(VBox):
+    extra_generated_classes = [["DummyApp", "DummyApp", "VBox"]]
+    jsmodel = "VBox"
+
+    # text reviews
+    pretext = Instance(Paragraph)
+
+    # layout boxes
+    mainrow = Instance(HBox)
+
+    def make_outputs(self, pt):
+        #self.pretext = Paragraph(text="ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ", width=800)
+        self.pretext = pt
+
+    def __init__(self, *args, **kwargs):
+        super(DummyApp, self).__init__(*args, **kwargs)
+
+    @classmethod
+    def create(cls, pt):
+        """
+        This function is called once, and is responsible for
+        creating all objects (plots, datasources, etc)
+        """
+        # create layout widgets
+        obj = cls()
+        obj.mainrow = HBox()
+
+        obj.make_outputs(pt)
+
+        # layout
+        obj.set_children()
+        return obj
+
+    def set_children(self):
+        self.children = [self.mainrow]
+        self.mainrow.children= [self.pretext]
+ 
+
 class HotelApp(VBox):
     extra_generated_classes = [["HotelApp", "HotelApp", "VBox"]]
     jsmodel = "VBox"
@@ -83,8 +129,10 @@ class HotelApp(VBox):
     # text reviews
     pretext = Instance(Paragraph)
 
+
     # input
     selectr = Instance(Select)
+    radio_group = Instance(RadioGroup)
 
     # plots
     plot = Instance(GMapPlot)
@@ -113,6 +161,8 @@ class HotelApp(VBox):
             value='Choose A State',
             options=[s[1] for s in states] + ['Choose A State']
         )
+        labels = ["County Averages", "Hotel Reviews"]
+        self.radio_group = RadioGroup(labels=labels, active=0)
 
     def make_outputs(self):
         self.pretext = Paragraph(text="", width=800)
@@ -137,6 +187,7 @@ class HotelApp(VBox):
         obj.statsbox = VBox()
         obj.totalbox = VBox()
 
+        labels = ["County Average Ratings", "Hotel Locations"]
         obj.make_inputs()
         obj.make_outputs()
 
@@ -161,7 +212,8 @@ class HotelApp(VBox):
         selected = self.source.selected
         print "seeing if selected!"
         if selected:
-            pandas_df = pandas_df.iloc[selected, :]
+            idxs = selected['1d']['indices']
+            pandas_df = pandas_df.iloc[idxs, :]
         else:
             pandas_df = pandas_df.iloc[0:0, :]
         return pandas_df
@@ -173,7 +225,15 @@ class HotelApp(VBox):
         rev = "Review #1: \n"
         rev += revs[ids[0]][0]
         print "rev is ", rev
-        self.pretext.text = rev
+        text = '<div id="section3">\n'
+        text += '<p>\n'
+        text += rev
+        text += '</p>'
+        text += '</div>'
+        
+        #self.pretext.text = rev
+        self.pretext.text = text
+
 
     def make_source(self):
         self.source = ColumnDataSource(data=self.df)
@@ -184,6 +244,14 @@ class HotelApp(VBox):
                     print "got one!!"
                     r.data_source = self.source
             #self.plot.source = self.source"""
+
+    def init_radio_group(self):
+
+        print "initing radio group"
+        self.radio_group.on_click(self.radio_group_handler)
+
+    def radio_group_handler(self, active):
+        print "radio group handler %s" % active
 
     def make_plots(self):
         self.create_plots()
@@ -231,14 +299,31 @@ class HotelApp(VBox):
         overlay = BoxSelectionOverlay(tool=box_select)
         plot.add_layout(overlay)
         #plot.add_glyph(self.source, circle)
+
+        #county_xs, county_ys = get_some_counties()
+        #apatch = Patch(x=county_xs, y=county_ys, fill_color=['white']*len(county_xs))
+        #plot.add_glyph(apatch)
+
+        plot.on_change('zoom', self, 'check_zoom_level')
+
         self.plot = plot
+
+    def check_zoom_level(self):
+
+        print "this is a brand new world order. peace and justice for all: ", self.plot.zoom
 
     def populate_glyphs(self):
         self.plot.renderers=[]
-        circle2 = Circle(x="lon", y="lat", size=10, fill_color="fill2", line_color="black")
+        circle2 = Circle(x="lon", y="lat", size=10, fill_color="fill2", fill_alpha=0.0, line_alpha=0.0)
         circle = Circle(x="lon", y="lat", size=10, fill_color="fill", line_color="black")
         #print "source is ", self.source['lon'], self.source['lat'], self.source['fill']
         self.plot.add_glyph(self.source, circle, nonselection_glyph=circle2)
+        #county_xs, county_ys = get_some_counties()
+        datasource = ColumnDataSource( get_some_counties())
+
+        #apatch = Patches(xs=county_xs, ys=county_ys, fill_color='white')
+        apatch = Patches(xs='xs', ys='ys', fill_color='color')
+        self.plot.add_glyph(datasource, apatch)
         #rndr = plot.renderers[-1]
 
 
@@ -292,7 +377,7 @@ class HotelApp(VBox):
         self.children = [self.totalbox]
         self.totalbox.children = [self.mainrow, self.bottomrow]
         self.mainrow.children = [self.plot, self.statsbox]
-        self.statsbox.children = [self.selectr, self.bar_plot]
+        self.statsbox.children = [self.selectr, self.radio_group, self.bar_plot]
         self.bottomrow.children = [self.pretext]
 
 
@@ -303,6 +388,8 @@ class HotelApp(VBox):
         if self.selectr:
             self.selectr.on_change('value', self, 'input_change')
             #self.selectr.on_change('value', self, 'selection_change')
+        if self.radio_group:
+            self.radio_group.on_change('active', self, 'radio_change')
 
     """def selection_change(self, obj, attrname, old, new):
         self.write_text()
@@ -325,6 +412,10 @@ class HotelApp(VBox):
         self.make_bar_plot()
         self.set_children()
         curdoc().add(self)
+
+    def radio_change(self, obj, attrname, old, new):
+        print "what the heck ", obj, attrname, old, new
+
 
     def input_change(self, obj, attrname, old, new):
         #if obj == self.selectr:
