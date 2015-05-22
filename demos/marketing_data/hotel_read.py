@@ -7,11 +7,13 @@ import numpy as np
 import pandas as pd
 
 zip_to_state = {}
+zip_to_county = {}
 with open("US.txt") as f:
     lines = f.readlines()
     for line in lines:
         data = line.split('\t')
         zip_to_state[data[1]] = data[4]
+        zip_to_county[data[1]] = data[5]
 
 def normalize_county(c):
     c = c.lower()
@@ -99,10 +101,11 @@ def read_data(num_lines=-1):
     lines2 = (json.loads(line) for line in open('/Users/talumbau/Downloads/115_2.txt'))
     alllines = itertools.chain.from_iterable([lines1, lines2])
 
-    static_cols = ["city", "name", "lat", "long", "postalCode"]
+    static_cols = ["city", "name", "lat", "long", "postalCode", "reviews"]
+    saved_cols = ["city", "name", "lat", "long", "postalCode"]
     derived_cols = ["ave_review", "id", "num_reviews"]
 
-    columns = {"city":[], "name":[], "lat":[], "long":[],
+    columns = {"city":[], "county":[], "name":[], "lat":[], "long":[],
             "id":[], "state":[], "ave_review":[], "num_reviews":[],
             'postalCode':[]}
 
@@ -112,7 +115,7 @@ def read_data(num_lines=-1):
         checks = [c in h for c in static_cols]
         has_all = all(checks)
         if has_all and state_is_good(h) and len(h['reviews']) > 0:
-            for c in static_cols:
+            for c in saved_cols:
                 columns[c].append(h[c])
 
             ave = scale_rating(ave_rating(h['reviews']))
@@ -120,6 +123,7 @@ def read_data(num_lines=-1):
             columns['num_reviews'].append(len(h['reviews']))
             z = normalize_zip(h['postalCode'])
             columns['state'].append(zip_to_state[z])
+            columns['county'].append(zip_to_county[z])
             columns['id'].append(count)
             the_reviews[count] = [r['text'] for r in h['reviews'] if 'text' in r]
            

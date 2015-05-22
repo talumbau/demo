@@ -14,13 +14,13 @@ from os.path import dirname, join, splitext
 import numpy as np
 import pandas as pd
 from numpy import pi
-from read_counties import get_some_counties
+from read_counties import get_some_counties, color_counties
 
 from bokeh.models import (ColumnDataSource, Plot,
     GMapPlot, Range1d, LinearAxis, Patch, Patches,
     PanTool, WheelZoomTool, BoxSelectTool, HoverTool,
     BoxSelectionOverlay, GMapOptions, FactorRange, TapTool,
-    NumeralTickFormatter, PrintfTickFormatter,
+    NumeralTickFormatter, PrintfTickFormatter, Callback,
     CategoricalTickFormatter, CategoricalAxis)
 
 from bokeh.models.glyphs import Circle, Text
@@ -41,10 +41,12 @@ def radio_group_handler(active):
 def get_hotel_data():
     import hotel_read
     #return hotel.names, hotel.lats, hotel.longs, hotel.city
-    dta, revs = hotel_read.read_data(num_lines=2000)
+    #dta, revs = hotel_read.read_data(num_lines=2000)
+    dta, revs = hotel_read.read_data()
     dta = pd.DataFrame({'names':dta['name'],
                         'lat':dta['lat'], 'lon':dta['lon'],
                         'city':dta['city'],
+                        'county':dta['county'],
                         'ratings':dta['ave_review'],
                         'fill':['yellow'] * len(dta['city']),
                         'fill2':['purple'] * len(dta['city']),
@@ -57,6 +59,11 @@ def get_hotel_data():
     return dta, revs
 
 hdata, hrevs = get_hotel_data()
+
+county_data = get_some_counties()
+
+#county_colors = read_counties.color_counties(hdata, county_data)
+color_counties(hdata, county_data)
 
 def return_hotel_data():
     return hdata
@@ -143,7 +150,7 @@ class HotelApp(VBox):
 
     # layout boxes
     mainrow = Instance(HBox)
-    bottomrow = Instance(HBox)
+    #bottomrow = Instance(HBox)
     statsbox = Instance(VBox)
     totalbox = Instance(VBox)
 
@@ -183,7 +190,7 @@ class HotelApp(VBox):
         # create layout widgets
         obj = cls()
         obj.mainrow = HBox()
-        obj.bottomrow = HBox()
+        #obj.bottomrow = HBox()
         obj.statsbox = VBox()
         obj.totalbox = VBox()
 
@@ -237,13 +244,16 @@ class HotelApp(VBox):
 
     def make_source(self):
         self.source = ColumnDataSource(data=self.df)
-        """if self.plot:
-            print "here we are!!"
-            for r in self.plot.renderers:
-                if isinstance(r, GlyphRenderer):
-                    print "got one!!"
-                    r.data_source = self.source
-            #self.plot.source = self.source"""
+        #self.source.callback = Callback()
+        self.source.callback = Callback(args=dict(), code="""
+            console.log("yep");
+            $.get( "reviews", function( response ) {
+                $( "#section2" ).html( response );
+            }, "html");
+            console.log("done");
+        """)
+
+        #$( "#section2" ).text( "<b>Some</b> new text." );
 
     def init_radio_group(self):
 
@@ -275,7 +285,7 @@ class HotelApp(VBox):
             x_range=x_range, y_range=y_range,
             map_options=map_options,
             title = "Hotel Review Explorer",
-            plot_width=800,
+            plot_width=700,
             plot_height=600
         )
         plot.map_options.map_type="hybrid"
@@ -319,10 +329,11 @@ class HotelApp(VBox):
         #print "source is ", self.source['lon'], self.source['lat'], self.source['fill']
         self.plot.add_glyph(self.source, circle, nonselection_glyph=circle2)
         #county_xs, county_ys = get_some_counties()
-        datasource = ColumnDataSource( get_some_counties())
+        datasource = ColumnDataSource(county_data)
 
         #apatch = Patches(xs=county_xs, ys=county_ys, fill_color='white')
-        apatch = Patches(xs='xs', ys='ys', fill_color='color')
+        #apatch = Patches(xs='xs', ys='ys', fill_color='colors', fill_alpha="alpha")
+        apatch = Patches(xs='xs', ys='ys', fill_color='thecolors', fill_alpha='alpha')
         self.plot.add_glyph(datasource, apatch)
         #rndr = plot.renderers[-1]
 
@@ -332,7 +343,7 @@ class HotelApp(VBox):
         x_rr = Range1d(start=0.0, end=6.0)
         y_rr = Range1d(start=0.0, end=10.0)
         TOOLS = "box_select,lasso_select"
-        bar_plot = figure(tools=TOOLS, width=500, height=400, x_range=x_rr, y_range=y_rr, title="Average Rating")
+        bar_plot = figure(tools=TOOLS, width=400, height=350, x_range=x_rr, y_range=y_rr, title="Average Rating")
 
         #x's and y's based on selected_df
         sdf = self.selected_df[['names', 'ratings']]
@@ -375,10 +386,10 @@ class HotelApp(VBox):
 
     def set_children(self):
         self.children = [self.totalbox]
-        self.totalbox.children = [self.mainrow, self.bottomrow]
+        self.totalbox.children = [self.mainrow]
         self.mainrow.children = [self.plot, self.statsbox]
         self.statsbox.children = [self.selectr, self.radio_group, self.bar_plot]
-        self.bottomrow.children = [self.pretext]
+        #self.bottomrow.children = [self.pretext]
 
 
     def setup_events(self):
