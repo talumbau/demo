@@ -67,11 +67,10 @@ def applet():
 @app.route("/reviews", methods=['GET'])
 def some_reviews():
     print("getting stuff here")
-    import pdb;pdb.set_trace()
     _id = request.args.get('id','')
     rev = ""
-    for i, r in enumerate(hrevs[_id]):
-        rev += "Review #%d: <br>" % i
+    for i, r in enumerate(hrevs[int(_id)]):
+        rev += "Review #%d: <br>" % (i + 1)
         rev += r + "<br>"
 
     #self.pretext.text = rev

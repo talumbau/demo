@@ -85,11 +85,10 @@ def color_counties(hdata, county_data):
             ave = name_ratings[name]
             for idx, cut in enumerate(cutoffs):
                 if cut >= ave:
-                    print "the ave is ", ave, "so idx is ", idx
+                    #print "the ave is ", ave, "so idx is ", idx
                     colors.append(RdYlGn6[idx])
                     break
         else:
-            print "empty idx"
             colors.append(RdYlGn6[0])
 
 

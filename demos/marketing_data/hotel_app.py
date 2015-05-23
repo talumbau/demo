@@ -29,20 +29,16 @@ from bokeh.properties import String, Instance
 from bokeh.server.app import bokeh_app
 from bokeh.server.utils.plugins import object_page
 from bokeh.models.widgets import (HBox, VBox, VBoxForm, PreText, Paragraph, Select,
-                                  RadioGroup)
+                                  RadioGroup, CheckboxGroup)
 
 from bokeh.models.renderers import GlyphRenderer
-
-def radio_group_handler(active):
-    print "radio group handler %s" % active
-
 
 
 def get_hotel_data():
     import hotel_read
     #return hotel.names, hotel.lats, hotel.longs, hotel.city
-    #dta, revs = hotel_read.read_data(num_lines=2000)
-    dta, revs = hotel_read.read_data()
+    dta, revs = hotel_read.read_data(num_lines=2000)
+    #dta, revs = hotel_read.read_data()
     dta = pd.DataFrame({'names':dta['name'],
                         'lat':dta['lat'], 'lon':dta['lon'],
                         'city':dta['city'],
@@ -55,15 +51,22 @@ def get_hotel_data():
                         'num_reviews':dta['num_reviews']})
 
     dta = dta.dropna(axis=0)
+    revs = [revs[i] for i in dta['id']]
 
     return dta, revs
 
 hdata, hrevs = get_hotel_data()
 
 county_data = get_some_counties()
+zeroed_counties = [0] * len(county_data['names'])
+full_counties = [1] * len(county_data['names'])
+zeroed_hotels = [0] * len(hdata['state'])
+full_hotels = [1] * len(hdata['state'])
+#hdata['alpha'] = full_hotels
 
-#county_colors = read_counties.color_counties(hdata, county_data)
 color_counties(hdata, county_data)
+
+county_data = pd.DataFrame(county_data)
 
 def return_hotel_data():
     return hdata
@@ -91,55 +94,18 @@ def get_data():
                          'num_reviews':num_reviews})
 
 
-class DummyApp(VBox):
-    extra_generated_classes = [["DummyApp", "DummyApp", "VBox"]]
-    jsmodel = "VBox"
-
-    # text reviews
-    pretext = Instance(Paragraph)
-
-    # layout boxes
-    mainrow = Instance(HBox)
-
-    def make_outputs(self, pt):
-        #self.pretext = Paragraph(text="ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ", width=800)
-        self.pretext = pt
-
-    def __init__(self, *args, **kwargs):
-        super(DummyApp, self).__init__(*args, **kwargs)
-
-    @classmethod
-    def create(cls, pt):
-        """
-        This function is called once, and is responsible for
-        creating all objects (plots, datasources, etc)
-        """
-        # create layout widgets
-        obj = cls()
-        obj.mainrow = HBox()
-
-        obj.make_outputs(pt)
-
-        # layout
-        obj.set_children()
-        return obj
-
-    def set_children(self):
-        self.children = [self.mainrow]
-        self.mainrow.children= [self.pretext]
- 
-
 class HotelApp(VBox):
     extra_generated_classes = [["HotelApp", "HotelApp", "VBox"]]
     jsmodel = "VBox"
 
     # text reviews
-    pretext = Instance(Paragraph)
+    #pretext = Instance(Paragraph)
 
 
     # input
     selectr = Instance(Select)
-    radio_group = Instance(RadioGroup)
+    #check_group = Instance(RadioGroup)
+    check_group = Instance(CheckboxGroup)
 
     # plots
     plot = Instance(GMapPlot)
@@ -147,6 +113,7 @@ class HotelApp(VBox):
 
     # data source
     source = Instance(ColumnDataSource)
+    county_source = Instance(ColumnDataSource)
 
     # layout boxes
     mainrow = Instance(HBox)
@@ -168,18 +135,17 @@ class HotelApp(VBox):
             value='Choose A State',
             options=[s[1] for s in states] + ['Choose A State']
         )
-        labels = ["County Averages", "Hotel Reviews"]
-        self.radio_group = RadioGroup(labels=labels, active=0)
+        labels = ["County Averages", "Hotels"]
+        self.check_group = CheckboxGroup(labels=labels, active=[0,1])
 
     def make_outputs(self):
-        self.pretext = Paragraph(text="", width=800)
+        pass
+        #self.pretext = Paragraph(text="", width=800)
 
     def __init__(self, *args, **kwargs):
         super(HotelApp, self).__init__(*args, **kwargs)
-        self._dfs = {}
-        #df, revs = get_hotel_data()
-        #self._df = df
-        #self._revs = revs
+        self._show_counties = True
+        self._show_hotels = True
 
     @classmethod
     def create(cls):
@@ -201,6 +167,7 @@ class HotelApp(VBox):
         # outputs
         #obj.pretext = Paragraph(text="", width=500)
         obj.make_source()
+        obj.make_county_source()
         lat=39.8282
         lng=-98.5795
         zoom=6
@@ -225,6 +192,7 @@ class HotelApp(VBox):
             pandas_df = pandas_df.iloc[0:0, :]
         return pandas_df
 
+
     def write_text(self):
         sdf = self.selected_df
         ids = sdf['id'].values
@@ -239,29 +207,35 @@ class HotelApp(VBox):
         text += '</div>'
         
         #self.pretext.text = rev
-        self.pretext.text = text
+        #self.pretext.text = text
 
 
     def make_source(self):
         self.source = ColumnDataSource(data=self.df)
-        #self.source.callback = Callback()
         self.source.callback = Callback(args=dict(), code="""
+
+            var inds = cb_obj.get('selected')['1d'].indices;
+            var theidx = inds[0];
+
             console.log("yep");
-            $.get( "reviews", function( response ) {
+            console.log(theidx);
+            $.get( "reviews", {id: theidx}, function( response ) {
                 $( "#section2" ).html( response );
             }, "html");
             console.log("done");
         """)
 
-        #$( "#section2" ).text( "<b>Some</b> new text." );
 
-    def init_radio_group(self):
+    def make_county_source(self):
+        self.county_source = ColumnDataSource(data=self.countydf)
+
+    """def init_check_group(self):
 
         print "initing radio group"
-        self.radio_group.on_click(self.radio_group_handler)
+        self.check_group.on_click(self.check_group_handler)
 
-    def radio_group_handler(self, active):
-        print "radio group handler %s" % active
+    def check_group_handler(self, active):
+        print "radio group handler %s" % active"""
 
     def make_plots(self):
         self.create_plots()
@@ -285,7 +259,7 @@ class HotelApp(VBox):
             x_range=x_range, y_range=y_range,
             map_options=map_options,
             title = "Hotel Review Explorer",
-            plot_width=700,
+            plot_width=680,
             plot_height=600
         )
         plot.map_options.map_type="hybrid"
@@ -294,49 +268,60 @@ class HotelApp(VBox):
         yaxis = LinearAxis(axis_label="lat", major_tick_in=0, formatter=PrintfTickFormatter(format="%.3f"))
         plot.add_layout(yaxis, 'left')
 
-        pan = PanTool()
-        wheel_zoom = WheelZoomTool()
-        box_select = BoxSelectTool()
+        #pan = PanTool()
+        #wheel_zoom = WheelZoomTool()
+        #box_select = BoxSelectTool()
         #box_select.renderers = [rndr]
         #tooltips = "@name"
-        tooltips = "<span class='tooltip-text'>@names</span>\n<br>"
-        tooltips += "<span class='tooltip-text'>Reviews: @num_reviews</span>"
+        #tooltips = "<span class='tooltip-text'>@names</span>\n<br>"
+        #tooltips += "<span class='tooltip-text'>Reviews: @num_reviews</span>"
         #hover = HoverTool(tooltips="@num_reviews")
         #hover = HoverTool(tooltips="@names")
-        hover = HoverTool(tooltips=tooltips)
-        tap = TapTool()
-        plot.add_tools(pan, wheel_zoom, box_select, hover, tap)
-        overlay = BoxSelectionOverlay(tool=box_select)
-        plot.add_layout(overlay)
+        #hover = HoverTool(tooltips=tooltips)
+        #tap = TapTool()
+        #plot.add_tools(pan, wheel_zoom, box_select, hover, tap)
+        #plot.add_tools(hover, tap)
+        #overlay = BoxSelectionOverlay(tool=box_select)
+        #plot.add_layout(overlay)
         #plot.add_glyph(self.source, circle)
-
         #county_xs, county_ys = get_some_counties()
         #apatch = Patch(x=county_xs, y=county_ys, fill_color=['white']*len(county_xs))
         #plot.add_glyph(apatch)
-
-        plot.on_change('zoom', self, 'check_zoom_level')
-
         self.plot = plot
 
-    def check_zoom_level(self):
-
-        print "this is a brand new world order. peace and justice for all: ", self.plot.zoom
 
     def populate_glyphs(self):
         self.plot.renderers=[]
-        circle2 = Circle(x="lon", y="lat", size=10, fill_color="fill2", fill_alpha=0.0, line_alpha=0.0)
-        circle = Circle(x="lon", y="lat", size=10, fill_color="fill", line_color="black")
-        #print "source is ", self.source['lon'], self.source['lat'], self.source['fill']
-        self.plot.add_glyph(self.source, circle, nonselection_glyph=circle2)
-        #county_xs, county_ys = get_some_counties()
-        datasource = ColumnDataSource(county_data)
+        self.plot.tools=[]
+        if self._show_counties:
+            print "showing you the counties"
+            #datasource = ColumnDataSource(county_data)
+            #apatch = Patches(xs=county_xs, ys=county_ys, fill_color='white')
+            #apatch = Patches(xs='xs', ys='ys', fill_color='colors', fill_alpha="alpha")
+            apatch = Patches(xs='xs', ys='ys', fill_color='thecolors', fill_alpha='alpha')
+            self.plot.add_glyph(self.county_source, apatch, name='counties')
 
-        #apatch = Patches(xs=county_xs, ys=county_ys, fill_color='white')
-        #apatch = Patches(xs='xs', ys='ys', fill_color='colors', fill_alpha="alpha")
-        apatch = Patches(xs='xs', ys='ys', fill_color='thecolors', fill_alpha='alpha')
-        self.plot.add_glyph(datasource, apatch)
-        #rndr = plot.renderers[-1]
+        if self._show_hotels:
+            print "showing you the hotels"
+            circle2 = Circle(x="lon", y="lat", size=10, fill_color="fill2", fill_alpha=1.0, line_alpha=0.0)
+            circle = Circle(x="lon", y="lat", size=10, fill_color="fill", fill_alpha=1.0, line_color="black")
+            #print "source is ", self.source['lon'], self.source['lat'], self.source['f1ll']
+            self.plot.add_glyph(self.source, circle, nonselection_glyph=circle2, name='hotels')
+            #county_xs, county_ys = get_some_counties()
 
+        rndr = self.plot.renderers[-1]
+        pan = PanTool()
+        wheel_zoom = WheelZoomTool()
+        box_select = BoxSelectTool()
+        box_select.renderers = [rndr]
+        tooltips = "@name"
+        tooltips = "<span class='tooltip-text'>@names</span>\n<br>"
+        tooltips += "<span class='tooltip-text'>Reviews: @num_reviews</span>"
+        hover = HoverTool(tooltips=tooltips, names=['hotels'])
+        tap = TapTool(names=['hotels'])
+        self.plot.add_tools(pan, wheel_zoom, box_select, hover, tap)
+        overlay = BoxSelectionOverlay(tool=box_select)
+        self.plot.add_layout(overlay)
 
     def make_bar_plot(self):
         # create a new plot
@@ -376,9 +361,6 @@ class HotelApp(VBox):
 
         bar_plot.yaxis.minor_tick_line_color = None
 
-        #bar_plot.axis.major_tick_out = 10
-        #bar_plot.axis.minor_tick_in = -3
-        #bar_plot.axis.minor_tick_out = 8
 
         bar_plot.xgrid.grid_line_color = None
         bar_plot.ygrid.grid_line_color = None
@@ -388,7 +370,7 @@ class HotelApp(VBox):
         self.children = [self.totalbox]
         self.totalbox.children = [self.mainrow]
         self.mainrow.children = [self.plot, self.statsbox]
-        self.statsbox.children = [self.selectr, self.radio_group, self.bar_plot]
+        self.statsbox.children = [self.selectr, self.check_group, self.bar_plot]
         #self.bottomrow.children = [self.pretext]
 
 
@@ -399,17 +381,11 @@ class HotelApp(VBox):
         if self.selectr:
             self.selectr.on_change('value', self, 'input_change')
             #self.selectr.on_change('value', self, 'selection_change')
-        if self.radio_group:
-            self.radio_group.on_change('active', self, 'radio_change')
-
-    """def selection_change(self, obj, attrname, old, new):
-        self.write_text()
-        self.set_children()
-        curdoc().add(self)"""
+        if self.check_group:
+            self.check_group.on_change('active', self, 'check_change')
 
     @property
     def df(self):
-        #return get_hotel_data()
         thedf = return_hotel_data()
         if self.selectr.value is None or self.selectr.value == 'Choose A State':
             return thedf
@@ -417,35 +393,48 @@ class HotelApp(VBox):
             newdf = thedf[thedf['state'] == self.selectr.value]
             return newdf
 
+    @property
+    def countydf(self):
+        thedf = county_data
+        if self.selectr.value is None or self.selectr.value == 'Choose A State':
+            return thedf
+        else:
+            newdf = thedf[thedf['state'] == self.selectr.value]
+            return newdf
+
+
     def selection_change(self, obj, attrname, old, new):
-        self.write_text()
         #self.make_source()
         self.make_bar_plot()
         self.set_children()
         curdoc().add(self)
 
-    def radio_change(self, obj, attrname, old, new):
+    def check_change(self, obj, attrname, old, new):
+        #Turn on/off the counties/hotel data
         print "what the heck ", obj, attrname, old, new
+        if 0 in new:
+            self._show_counties = True
+        else:
+            self._show_counties = False
 
+        if 1 in new:
+            self._show_hotels = True
+        else:
+            self._show_hotels = False
+
+        self.populate_glyphs()
+        self.set_children()
+        curdoc().add(self)
 
     def input_change(self, obj, attrname, old, new):
         #if obj == self.selectr:
             #self.select_val = new
-        self.make_source()
-        self.populate_glyphs()
-        #self.make_plots()
-        #self.make_bar_plot()
-        print "lat: ", self.plot._map_options.lat
-        print "lng: ", self.plot._map_options.lng
-        print "zoom: ", self.plot._map_options.zoom
-        print "xrange: ", self.plot.x_range
-        print "yrange: ", self.plot.y_range
+        #self.make_source()
+        #self.make_county_source()
+        self.update_source()
+        self.update_county_source()
+        #self.populate_glyphs()
 
-        """self.make_plots(self.plot._map_options.lat,
-                        self.plot._map_options.lng,
-                        self.plot._map_options.zoom,
-                        self.plot.x_range,
-                        self.plot.y_range,)"""
         self.set_children()
         curdoc().add(self)
 

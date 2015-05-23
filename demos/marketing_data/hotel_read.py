@@ -109,8 +109,9 @@ def read_data(num_lines=-1):
             "id":[], "state":[], "ave_review":[], "num_reviews":[],
             'postalCode':[]}
 
-    #the_reviews = {}
-    the_reviews = []
+    the_reviews = {}
+    #the_reviews = []
+    idx_count = 0
     for count, h in enumerate(alllines):
 
         checks = [c in h for c in static_cols]
@@ -124,13 +125,12 @@ def read_data(num_lines=-1):
             z = normalize_zip(h['postalCode'])
             columns['state'].append(zip_to_state[z])
             columns['county'].append(zip_to_county[z])
-            columns['id'].append(count)
+            columns['id'].append(idx_count)
             revs_with_text = [r['text'] for r in h['reviews'] if 'text' in r]
             #the_reviews[count] = revs_with_text
-            the_reviews.append(revs_with_text)
+            the_reviews[idx_count] = revs_with_text
             columns['num_reviews'].append(len(revs_with_text))
-            if len(the_reviews) == 405:
-                import pdb;pdb.set_trace()
+            idx_count += 1
            
 
         if not unlimited:
@@ -139,7 +139,4 @@ def read_data(num_lines=-1):
 
     columns['lat'] = list(map(float, columns['lat']))
     columns['lon'] = list(map(float, columns['long']))
-
     return columns, the_reviews
-
-dta, revs = read_data(num_lines=4000)
