@@ -109,7 +109,8 @@ def read_data(num_lines=-1):
             "id":[], "state":[], "ave_review":[], "num_reviews":[],
             'postalCode':[]}
 
-    the_reviews = {}
+    #the_reviews = {}
+    the_reviews = []
     for count, h in enumerate(alllines):
 
         checks = [c in h for c in static_cols]
@@ -120,12 +121,16 @@ def read_data(num_lines=-1):
 
             ave = scale_rating(ave_rating(h['reviews']))
             columns['ave_review'].append(ave)
-            columns['num_reviews'].append(len(h['reviews']))
             z = normalize_zip(h['postalCode'])
             columns['state'].append(zip_to_state[z])
             columns['county'].append(zip_to_county[z])
             columns['id'].append(count)
-            the_reviews[count] = [r['text'] for r in h['reviews'] if 'text' in r]
+            revs_with_text = [r['text'] for r in h['reviews'] if 'text' in r]
+            #the_reviews[count] = revs_with_text
+            the_reviews.append(revs_with_text)
+            columns['num_reviews'].append(len(revs_with_text))
+            if len(the_reviews) == 405:
+                import pdb;pdb.set_trace()
            
 
         if not unlimited:
