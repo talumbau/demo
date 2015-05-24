@@ -1,8 +1,10 @@
 import json
 import re
 import collections
+import numpy as np
 from bokeh.sampledata.iris import flowers
 from bokeh.plotting import *
+import bokeh
 import itertools
 import pandas as pd
 
@@ -107,6 +109,15 @@ def _get_all_shoes(alllines):
     df = pd.DataFrame({'name':name, 'price':price, 'brand':brand})
     return df.loc[:800, :]
 
+def make_brands_to_prices(df):
+
+    brands_to_prices = collections.defaultdict(list)
+    #import pdb;pdb.set_trace()
+    for idx, s in df.iterrows():
+        brands_to_prices[s['brand'].lower()].append(s['price'])
+
+    return brands_to_prices
+
 
 def get_brands_to_prices():
 
@@ -131,8 +142,6 @@ def get_brands_to_prices():
         else:
             print "can't find price or salePrice: ", count
 
-
-
     print "num_mans: ", num_mans
     print "num_mannums: ", num_mannums
     print "num_prices: ", num_prices
@@ -147,3 +156,28 @@ def get_brands_to_prices():
 
     return brands_to_prices
 
+def average_price_per_brand(b2p):
+    aves = [ (np.mean(prices), b) for b, prices in b2p.iteritems()]
+    return sorted(aves)
+
+def split_on_prices(prices_and_brands, splits):
+    import collections
+    prices = [x[0] for x in prices_and_brands]
+    idxs = np.digitize(prices, splits)
+    groups = collections.defaultdict(list)
+    for idx, pb in zip(idxs, prices_and_brands):
+        groups[splits[idx]].append(pb)
+
+    return groups
+    
+def make_brand_to_color(groups):
+    colors = bokeh.palettes.YlOrBr6
+    price_points = sorted(groups.keys())
+    price2idx = {r:p for p,r in zip(range(len(price_points)), price_points)}
+    b2c = {}
+    for price, brands in groups.iteritems():
+        for b in brands:
+            b2c[b[1]] = colors[price2idx[price]]
+
+    return b2c
+ 

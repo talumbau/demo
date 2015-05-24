@@ -18,7 +18,7 @@ from numpy import pi
 import pandas as pd
 import shoes_func
 
-from bokeh.models import ColumnDataSource, Plot, HoverTool
+from bokeh.models import ColumnDataSource, Plot, HoverTool, TapTool
 from bokeh.plotting import figure, curdoc
 from bokeh.charts import Bar, output_file, show, Histogram
 from bokeh.properties import String, Instance
@@ -35,18 +35,19 @@ ranges = ["< $100", "< $200", "< $300",
           "< $3400", "< $3500", "< $3600", "< $3700", "< $3800", "< $3900", 
           "< $4000", ">= $4000"]
 
-def get_shoe_data():
-    b2p = shoes_func.get_brands_to_prices()
-    b2p_small = {}
-    for count, k in zip(range(0,30), b2p):
-        b2p_small[k] = b2p[k]
-    return b2p_small
-
-b2p = get_shoe_data()
-#df = pd.DataFrame(b2p)
-brands = [k for k in zip(range(0,20), b2p.keys())]
 
 _shoedf = shoes_func.get_all_shoes()
+def get_shoe_data():
+    #b2p = shoes_func.get_brands_to_prices()
+    b2p = shoes_func.make_brands_to_prices(_shoedf)
+    #b2p_small = {}
+    #for count, k in zip(range(0,30), b2p):
+        #b2p_small[k] = b2p[k]
+    return b2p
+
+b2p = get_shoe_data()
+brands = [k for k in zip(range(0,20), b2p.keys())]
+
 idx = (_shoedf['price'] + 100)//100
 idx = [int(x) + 1 for x in idx]
 counts = [0] * len(ranges)
@@ -60,6 +61,10 @@ bottoms = []
 fills = []
 height = [0.5] * len(_shoedf['price'])
 width = [0.5] * len(_shoedf['price'])
+
+brand_aves = shoes_func.average_price_per_brand(b2p)
+groups = shoes_func.split_on_prices(brand_aves, [100, 250, 300, 500, 2000, 9999])
+brand_to_color = shoes_func.make_brand_to_color(groups)
 
 for i in _shoedf.index:
     ans = _shoedf.ix[i]
@@ -76,7 +81,8 @@ for i in _shoedf.index:
     bottoms.append(counts[idx]/2)
     tops.append(counts[idx] + 0.5)
     counts[idx] = counts[idx] + 1
-    fills.append(colors[(random.randint(0, 10000) % 11)])
+    #fills.append(colors[(random.randint(0, 10000) % 11)])
+    fills.append(brand_to_color[ans['brand']])
 
 _shoedf['xvals'] = xvals
 _shoedf['xcat'] = xcat
@@ -105,22 +111,16 @@ class ShoeApp(VBox):
 
     # plots
     plot = Instance(Plot)
-    hist_plot = Instance(Plot)
+    brand_plot = Instance(Plot)
     # data source
     source = Instance(ColumnDataSource)
-    dfsource = Instance(ColumnDataSource)
-
-    # input
-    selectr = Instance(Select)
+    brand_source = Instance(ColumnDataSource)
 
     # layout boxes
-    mainrow = Instance(HBox)
-    bottomrow = Instance(HBox)
     totalbox = Instance(VBox)
 
     def __init__(self, *args, **kwargs):
         super(ShoeApp, self).__init__(*args, **kwargs)
-        self._dfs = {}
 
     @classmethod
     def create(cls):
@@ -130,74 +130,49 @@ class ShoeApp(VBox):
         """
         # create layout widgets
         obj = cls()
-        obj.mainrow = HBox()
-        obj.bottomrow = HBox()
         obj.totalbox = VBox()
 
         obj.make_source()
         # outputs
-        obj.make_inputs()
-        #obj.make_plots()
         obj.make_better_plots()
 
         # layout
         obj.set_children()
         return obj
 
-    @property
-    def selected_df(self):
-        pandas_df = self.df
-        selected = self.source.selected
-        if selected:
-            pandas_df = pandas_df.iloc[selected, :]
-        return pandas_df
 
     def make_source(self):
         self.source = ColumnDataSource(data=self.df)
-        self.dfsource = ColumnDataSource(data=self.shoedf)
+        self.make_brand_source()
 
-    def make_inputs(self):
-
-        self.selectr = Select(
-            name='brands',
-            options=b2p.keys() + ['Choose a Brand']
-        )
-
-    def make_plots(self):
-
-        bins = np.arange(0.0, 4000, 100)
-        bins2 = np.concatenate((bins, np.array([8000.0])))
-        b2p_stacked = { k: make_row(np.digitize(v, bins), len(bins2)) for k,v in b2p.iteritems()}
-
-        bar = Bar(b2p_stacked, ranges, title="Price Distribution", stacked=True, width=1100, height=700,
-                  legend="top_right")
-
-        self.plot = bar
-        self.make_hist_plot()
+    def make_brand_source(self):
+        self.brand_source = ColumnDataSource(data=self.brand_df)
 
     def make_better_plots(self):
-        
-        """sdf = self.shoedf
-        idx = (sdf['price'] + 100)//100
-        idx = [int(x) + 1 for x in idx]
-        counts = [0] * len(ranges)
-        colors = ["blue", "orange", "green", "yellow", "purple"]
-        xvals = []
-        rightvals = []
-        bottoms = []
-        fills = []
-        height = [1] * len(sdf['price'])
 
-        for i in sdf.index:
-            ans = sdf.ix[i]
-            idx = int(ans['price'] + 100)//100 + 1
-            print "idx is ", idx
-            print "price is ", ans['price']
-            xvals.append(idx - 0.25)
-            rightvals.append(idx + 0.25)
-            bottoms.append(counts[idx])
-            counts[idx] = counts[idx] + 1
-            fills.append(colors[idx % 5])"""
+        TOOLS = "box_select,lasso_select"
+        tooltips = "<span class='tooltip-text'>Name: @name</span>\n<br>"
+        tooltips += "<span class='tooltip-text'>Brand: @brand</span>\n<br>"
+        tooltips += "<span class='tooltip-text'>Price: @price</span>\n<br>"
+        #hover = HoverTool(tooltips="@num_reviews")
+        #hover = HoverTool(tooltips="@names")
+        hover = HoverTool(tooltips=tooltips)
+        tap = TapTool()
+
+        #p = figure(tools=TOOLS, width=1100, height=700, x_range=x_rr, y_range=y_rr, title="Price Distribution")
+        #p = figure(tools=TOOLS, width=1100, height=700, title="Price Distribution")
+        #p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution", angle=pi/4)
+        p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution")
+        p.xaxis.major_label_orientation = pi/4
+
+        #p.quad(left='xvals', right='rightvals', top='tops', bottom='bottoms', color='fills', source=self.dfsource)
+        p.rect(x='xcat', y='yvals', width='width', height='height', color='fills', source=self.source)
+        p.add_tools(hover, tap)
+
+        self.plot = p
+        self.make_brand_plot()
+
+    def make_brand_plot(self):
 
         TOOLS = "box_select,lasso_select"
         tooltips = "<span class='tooltip-text'>Name: @name</span>\n<br>"
@@ -210,62 +185,26 @@ class ShoeApp(VBox):
         #p = figure(tools=TOOLS, width=1100, height=700, x_range=x_rr, y_range=y_rr, title="Price Distribution")
         #p = figure(tools=TOOLS, width=1100, height=700, title="Price Distribution")
         #p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution", angle=pi/4)
-        p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution")
+        p = figure(tools=TOOLS, width=900, height=400, x_range=ranges, title="XYZ Brand Products")
         p.xaxis.major_label_orientation = pi/4
 
         #p.quad(left='xvals', right='rightvals', top='tops', bottom='bottoms', color='fills', source=self.dfsource)
-        p.rect(x='xcat', y='yvals', width='width', height='height', color='fills', source=self.dfsource)
+        p.rect(x='xcat', y='yvals', width='width', height='height', color='fills', source=self.brand_source)
         p.add_tools(hover)
 
-        self.plot = p
-        self.make_hist_plot()
-
-    def make_hist_plot(self):
-        """global_hist, global_bins = np.histogram(self.df[ticker + "_returns"], bins=50)
-        hist, bins = np.histogram(self.selected_df[ticker + "_returns"], bins=50)
-        width = 0.7 * (bins[1] - bins[0])
-        center = (bins[:-1] + bins[1:]) / 2
-        start = global_bins.min()
-        end = global_bins.max()
-        top = hist.max()"""
-
-        """p = figure(
-            title="Brand histogram",
-            plot_width=800, plot_height=400,
-            tools="",
-            title_text_font_size="10pt",
-            x_range=[0, 1000],
-            y_range=[0, 2],
-        )"""
-
-        
-        if self.selectr.value is None or self.selectr.value == 'Choose A Brand':
-            p = figure(
-                title="Brand histogram",
-                plot_width=800, plot_height=400,
-                tools="",
-                title_text_font_size="10pt",
-                x_range=[0, 1000],
-                y_range=[0, 2])
-            self.hist_plot = p
-
-        else:
-            df = pd.DataFrame({'prices':b2p[self.selectr.value]})
-            print "prices are ", b2p[self.selectr.value]
-            self.hist_plot = Histogram(df, bins=200, width=800, height=400, legend=True)
+        self.brand_plot = p
 
 
     def set_children(self):
         self.children = [self.totalbox]
-        #self.totalbox.children = [self.plot]
-        self.totalbox.children = [self.mainrow, self.bottomrow]
-        self.mainrow.children = [self.plot]
-        self.bottomrow.children = [self.hist_plot, self.selectr]
+        self.totalbox.children = [self.plot, self.brand_plot]
+        #self.totalbox.children = [self.mainrow, self.bottomrow]
+        #self.mainrow.children = [self.plot]
+        #self.bottomrow.children = [self.hist_plot, self.selectr]
         #self.mainrow.children = [self.selectr]
         #self.bottomrow.children = [self.plot]
 
     def input_change(self, obj, attrname, old, new):
-
         self.make_source()
         self.make_better_plots()
         self.set_children()
@@ -275,21 +214,38 @@ class ShoeApp(VBox):
         super(ShoeApp, self).setup_events()
         if self.source:
             self.source.on_change('selected', self, 'selection_change')
-        if self.selectr:
-            self.selectr.on_change('value', self, 'input_change')
 
 
     def selection_change(self, obj, attrname, old, new):
+        #self.make_brand_plot
+        #self.set_children()
+        #curdoc().add(self)
+        self.make_brand_source()
+        self.make_brand_plot()
         self.set_children()
         curdoc().add(self)
 
-    @property
-    def df(self):
-        return get_shoe_data()
 
     @property
-    def shoedf(self):
+    def df(self):
         return _shoedf
+
+    @property
+    def brand_df(self):
+
+        pandas_df = self.df
+        selected = self.source.selected
+        if selected['1d']['indices']:
+            idxs = selected['1d']['indices']
+            sel_brand = pandas_df.iloc[idxs[0], :]['brand']
+            #pandas_df = pandas_df.iloc[idxs, :]
+            #return _shoedf[_shoedf['brand'] =='manolo blahnik']
+            return _shoedf[_shoedf['brand'] == sel_brand]
+        else:
+            return pandas_df.iloc[0:0, :]
+
+        #return _shoedf[_shoedf['brand'] =='manolo blahnik']
+
 
 
 # The following code adds a "/bokeh/shoes/" url to the bokeh-server. This URL
