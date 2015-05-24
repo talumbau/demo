@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <style>
+        #header {
+            background-color:grey;
+            color:white;
+            text-align:center;
+            padding:5px;
+        }
+        #nav {
+            line-height:30px;
+            background-color:#eeaeee;
+            height:550px;
+            width:100px;
+            float:left;
+            padding:5px;          
+        }
+        #section {
+            background-color:pink;
+            width:1100px;
+            float:center;
+            padding:10px;        
+        }
+        #section2 {
+            background-color:orange;
+            width:1100px;
+            height:250px;
+            float:center;
+            padding:5px;
+            overflow-y:scroll;
+        }
+        #section3 {
+            width:1100px;
+            height:150px;
+            float:center;
+            padding:5px;
+            overflow-y:scroll;
+        }
+
+        #footer {
+            background-color:black;
+            color:white;
+            clear:both;
+            text-align:center;
+        padding:5px;      
+    }
+    </style>
+
+        <meta charset="utf-8">
+        <title>Bokeh Hotel Applet Example</title>
+        <script src="jquery-2.1.4.js"></script>
+        <script src="{{ app_url }}"></script>
+        <script>
+            window._bokeh_onload_callbacks = [window.HotelApp.main];
+        </script>
+    </head>
+    <body>
+    <div id="section">
+        {{ app_tag|indent(8)|safe }}
+    </div>
+    <div id="section2">
+        <p> </p>
+    </div>
+
+    </body>
+</html>

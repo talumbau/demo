@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <style>
+        h1 {
+            font-size: 40px;
+        }
+
+        h2 {
+            font-size: 30px;
+        }
+
+        p {
+            font-size: 14px;
+        }
+
+        #header {
+            background-color:grey;
+            color:white;
+            text-align:left;
+            padding:5px;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        #nav {
+            line-height:30px;
+            background-color:#eeaeee;
+            height:550px;
+            width:100px;
+            float:left;
+            padding:5px;          
+        }
+        #section {
+            background-color:green;
+            width:1000px;
+            float:center;
+            padding:4px;        
+        }
+        #section2 {
+            background-color:orange;
+            width:1000px;
+            height:250px;
+            float:center;
+            padding:4px;
+            overflow-y:scroll;
+        }
+        #section3 {
+            width:1000px;
+            height:150px;
+            float:center;
+            padding:5px;
+            overflow-y:scroll;
+        }
+
+        #footer {
+            background-color:black;
+            color:white;
+            clear:both;
+            text-align:center;
+        padding:5px;      
+    }
+    </style>
+    <div id="header">
+        <h1>Product Data Example: Shoes</h1>
+    </div>
+
+        <meta charset="utf-8">
+        <title>Bokeh Shoe Applet Example</title>
+        <script src="jquery-2.1.4.js"></script>
+        <script src="{{ app_url }}"></script>
+        <script>
+            window._bokeh_onload_callbacks = [window.ShoeApp.main];
+        </script>
+    </head>
+    <body>
+    <div id="section">
+        {{ app_tag|indent(8)|safe }}
+    </div>
+    <div id="section2">
+        <p> </p>
+    </div>
+
+    </body>
+</html>
