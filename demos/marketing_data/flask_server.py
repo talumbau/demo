@@ -13,33 +13,18 @@ from flask import Flask, render_template, request
 import pandas as pd
 
 import hotel_app
+import hotel_read
 from hotel_app import HotelApp
 from bokeh.embed import components
 from bokeh.resources import CDN
+
 
 app = Flask('sampleapp')
 
 bokeh_url = "http://localhost:5006"
 applet_url = "http://localhost:5050"
 
-def get_hotel_data():
-    import hotel_read
-    #return hotel.names, hotel.lats, hotel.longs, hotel.city
-    dta, revs = hotel_read.read_data(num_lines=2000)
-    dta = pd.DataFrame({'names':dta['name'],
-                        'lat':dta['lat'], 'lon':dta['lon'],
-                        'city':dta['city'],
-                        'ratings':dta['ave_review'],
-                        'fill':['yellow'] * len(dta['city']),
-                        'fill2':['purple'] * len(dta['city']),
-                        'state':dta['state'],
-                        'id':dta['id'],
-                        'num_reviews':dta['num_reviews']})
-
-    dta = dta.dropna(axis=0)
-    return dta, revs
-
-hdata, hrevs = get_hotel_data()
+hdata, hrevs = hotel_read.get_hotel_data()
 
 
 @app_document("hotel_example", bokeh_url)

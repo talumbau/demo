@@ -144,9 +144,6 @@ def get_brands_to_prices():
     print "all_mns: ", len(all_mns)
     print "all_lens: ", all_lens
     print "has_prices: ", has_prices
-    #liness2 = [json.loads(line) for line in open('116_2.txt')]
-    #linesh1 = [json.loads(line) for line in open('115_1.txt')]
-    #linesh2 = [json.loads(line) for line in open('115_2.txt')]
 
     return brands_to_prices
 

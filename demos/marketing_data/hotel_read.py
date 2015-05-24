@@ -140,3 +140,24 @@ def read_data(num_lines=-1):
     columns['lat'] = list(map(float, columns['lat']))
     columns['lon'] = list(map(float, columns['long']))
     return columns, the_reviews
+
+def get_hotel_data():
+    #return hotel.names, hotel.lats, hotel.longs, hotel.city
+    dta, revs = read_data(num_lines=2000)
+    #dta, revs = hotel_read.read_data()
+    dta = pd.DataFrame({'names':dta['name'],
+                        'lat':dta['lat'], 'lon':dta['lon'],
+                        'city':dta['city'],
+                        'county':dta['county'],
+                        'ratings':dta['ave_review'],
+                        'fill':['yellow'] * len(dta['city']),
+                        'fill2':['purple'] * len(dta['city']),
+                        'state':dta['state'],
+                        'id':dta['id'],
+                        'num_reviews':dta['num_reviews']})
+
+    dta = dta.dropna(axis=0)
+    revs = [revs[i] for i in dta['id']]
+    return dta, revs
+
+

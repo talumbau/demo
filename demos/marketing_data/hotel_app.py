@@ -32,30 +32,10 @@ from bokeh.models.widgets import (HBox, VBox, VBoxForm, PreText, Paragraph, Sele
                                   RadioGroup, CheckboxGroup)
 
 from bokeh.models.renderers import GlyphRenderer
+import hotel_read
 
 
-def get_hotel_data():
-    import hotel_read
-    #return hotel.names, hotel.lats, hotel.longs, hotel.city
-    dta, revs = hotel_read.read_data(num_lines=2000)
-    #dta, revs = hotel_read.read_data()
-    dta = pd.DataFrame({'names':dta['name'],
-                        'lat':dta['lat'], 'lon':dta['lon'],
-                        'city':dta['city'],
-                        'county':dta['county'],
-                        'ratings':dta['ave_review'],
-                        'fill':['yellow'] * len(dta['city']),
-                        'fill2':['purple'] * len(dta['city']),
-                        'state':dta['state'],
-                        'id':dta['id'],
-                        'num_reviews':dta['num_reviews']})
-
-    dta = dta.dropna(axis=0)
-    revs = [revs[i] for i in dta['id']]
-
-    return dta, revs
-
-hdata, hrevs = get_hotel_data()
+hdata, hrevs = hotel_read.get_hotel_data()
 
 county_data = get_some_counties()
 zeroed_counties = [0] * len(county_data['names'])
