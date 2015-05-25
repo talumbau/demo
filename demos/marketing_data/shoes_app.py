@@ -35,6 +35,13 @@ ranges = ["< $100", "< $200", "< $300",
           "< $3400", "< $3500", "< $3600", "< $3700", "< $3800", "< $3900", 
           "< $4000", ">= $4000"]
 
+MAX_IDX = 41
+
+orig_order = list(ranges)
+ranges.reverse()
+
+num_slots = len(ranges)
+
 
 _shoedf = shoes_func.get_all_shoes()
 def get_shoe_data():
@@ -51,10 +58,10 @@ brands = [k for k in zip(range(0,20), b2p.keys())]
 idx = (_shoedf['price'] + 100)//100
 idx = [int(x) + 1 for x in idx]
 counts = [0] * len(ranges)
-colors = bokeh.palettes.PRGn11
 xvals = []
 yvals = []
 xcat = []
+brand_y = [0.0] * len(_shoedf['price'])
 rightvals = []
 tops = []
 bottoms = []
@@ -63,16 +70,19 @@ height = [0.5] * len(_shoedf['price'])
 width = [0.5] * len(_shoedf['price'])
 
 brand_aves = shoes_func.average_price_per_brand(b2p)
-groups = shoes_func.split_on_prices(brand_aves, [100, 250, 300, 500, 2000, 9999])
+splitters = [100, 250, 300, 500, 750, 900, 1400, 1800, 2000, 3000, 9999]
+groups = shoes_func.split_on_prices(brand_aves, splitters)
 brand_to_color = shoes_func.make_brand_to_color(groups)
 
 for i in _shoedf.index:
     ans = _shoedf.ix[i]
-    idx = int(ans['price'] + 100)//100 + 1
+    #idx = int(ans['price'] + 100)//100 + 1
+    idx = (num_slots - 1) - int(ans['price'] + 100)//100 + 1
     print "idx is ", idx
     print "price is ", ans['price']
     #Categorical stuff
-    xcat.append(ranges[idx-2])
+    #xcat.append(ranges[idx-2])
+    xcat.append(ranges[idx])
     yvals.append(counts[idx] - 0.5*counts[idx])
 
     #quad stuff
@@ -81,7 +91,6 @@ for i in _shoedf.index:
     bottoms.append(counts[idx]/2)
     tops.append(counts[idx] + 0.5)
     counts[idx] = counts[idx] + 1
-    #fills.append(colors[(random.randint(0, 10000) % 11)])
     fills.append(brand_to_color[ans['brand']])
 
 _shoedf['xvals'] = xvals
@@ -93,6 +102,7 @@ _shoedf['fills'] = fills
 _shoedf['yvals'] = yvals
 _shoedf['height'] = height
 _shoedf['width'] = width
+_shoedf['brand_y'] = brand_y
 
 
 def make_row(idxs, _len):
@@ -117,7 +127,7 @@ class ShoeApp(VBox):
     brand_source = Instance(ColumnDataSource)
 
     # layout boxes
-    totalbox = Instance(VBox)
+    totalbox = Instance(HBox)
 
     def __init__(self, *args, **kwargs):
         super(ShoeApp, self).__init__(*args, **kwargs)
@@ -130,7 +140,7 @@ class ShoeApp(VBox):
         """
         # create layout widgets
         obj = cls()
-        obj.totalbox = VBox()
+        obj.totalbox = HBox()
 
         obj.make_source()
         # outputs
@@ -148,6 +158,30 @@ class ShoeApp(VBox):
     def make_brand_source(self):
         self.brand_source = ColumnDataSource(data=self.brand_df)
 
+    def configure_brand_source(self, min_idx=0, max_idx=MAX_IDX):
+        bdf = self.brand_df
+        min_idx, max_idx = shoes_func.min_max_range(ranges, bdf['price'])
+        counts = [0] * (max_idx - min_idx + 1)
+        import pdb;pdb.set_trace()
+        for i in bdf.index:
+            ans = bdf.ix[i]
+            #idx = int(ans['price'] + 100)//100 + 1
+            idx = int(ans['price']//100)
+            print "idx is ", idx
+            print "price is ", ans['price']
+            #Categorical stuff
+            #xcat.append(ranges[idx-2])
+            _shoedf.loc[i, 'brand_y'] = (counts[idx - min_idx] - 0.5*counts[idx - min_idx])
+            counts[idx - min_idx] = counts[idx - min_idx] + 1
+            #quad stuff
+            #xvals.append(idx - 0.25)
+            #rightvals.append(idx + 0.25)
+            #bottoms.append(counts[idx]/2)
+            #tops.append(counts[idx] + 0.5)
+            #fills.append(brand_to_color[ans['brand']])
+
+
+
     def make_better_plots(self):
 
         TOOLS = "box_select,lasso_select"
@@ -162,18 +196,21 @@ class ShoeApp(VBox):
         #p = figure(tools=TOOLS, width=1100, height=700, x_range=x_rr, y_range=y_rr, title="Price Distribution")
         #p = figure(tools=TOOLS, width=1100, height=700, title="Price Distribution")
         #p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution", angle=pi/4)
-        p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution")
-        p.xaxis.major_label_orientation = pi/4
+        #p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution")
+        p = figure(tools=TOOLS, width=600, height=1000, y_range=ranges, title="Price Distribution")
+        p.yaxis.major_label_orientation = pi/4
 
         #p.quad(left='xvals', right='rightvals', top='tops', bottom='bottoms', color='fills', source=self.dfsource)
-        p.rect(x='xcat', y='yvals', width='width', height='height', color='fills', source=self.source)
+        #p.rect(x='xcat', y='yvals', width='width', height='height', color='fills', source=self.source)
+        p.rect(x='yvals', y='xcat', width='width', height='height', color='fills', source=self.source)
         p.add_tools(hover, tap)
 
         self.plot = p
         self.make_brand_plot()
 
-    def make_brand_plot(self):
+    def make_brand_plot(self, min_idx=0, max_idx=MAX_IDX):
 
+        import pdb;pdb.set_trace()
         TOOLS = "box_select,lasso_select"
         tooltips = "<span class='tooltip-text'>Name: @name</span>\n<br>"
         tooltips += "<span class='tooltip-text'>Brand: @brand</span>\n<br>"
@@ -185,11 +222,17 @@ class ShoeApp(VBox):
         #p = figure(tools=TOOLS, width=1100, height=700, x_range=x_rr, y_range=y_rr, title="Price Distribution")
         #p = figure(tools=TOOLS, width=1100, height=700, title="Price Distribution")
         #p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution", angle=pi/4)
-        p = figure(tools=TOOLS, width=900, height=400, x_range=ranges, title="XYZ Brand Products")
+        bdf = self.brand_df
+        if len(bdf) > 0:
+            title = "Brand: " + self.brand_df['brand'].values[0]
+        else:
+            title = ""
+        brand_ranges = orig_order[min_idx:max_idx]
+        p = figure(tools=TOOLS, width=400, height=400, x_range=brand_ranges, title=title)
         p.xaxis.major_label_orientation = pi/4
 
         #p.quad(left='xvals', right='rightvals', top='tops', bottom='bottoms', color='fills', source=self.dfsource)
-        p.rect(x='xcat', y='yvals', width='width', height='height', color='fills', source=self.brand_source)
+        p.rect(x='xcat', y='brand_y', width='width', height='height', color='fills', source=self.brand_source)
         p.add_tools(hover)
 
         self.brand_plot = p
@@ -220,8 +263,12 @@ class ShoeApp(VBox):
         #self.make_brand_plot
         #self.set_children()
         #curdoc().add(self)
+        import pdb;pdb.set_trace()
+        bdf = self.brand_df
+        min_idx, max_idx = shoes_func.min_max_range(ranges, bdf['price'])
+        self.configure_brand_source(min_idx, max_idx)
         self.make_brand_source()
-        self.make_brand_plot()
+        self.make_brand_plot(min_idx, max_idx)
         self.set_children()
         curdoc().add(self)
 

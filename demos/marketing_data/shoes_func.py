@@ -171,7 +171,7 @@ def split_on_prices(prices_and_brands, splits):
     return groups
     
 def make_brand_to_color(groups):
-    colors = bokeh.palettes.YlOrBr6
+    colors = bokeh.palettes.Spectral11
     price_points = sorted(groups.keys())
     price2idx = {r:p for p,r in zip(range(len(price_points)), price_points)}
     b2c = {}
@@ -180,4 +180,19 @@ def make_brand_to_color(groups):
             b2c[b[1]] = colors[price2idx[price]]
 
     return b2c
- 
+
+def min_max_range(ranges, prices):
+    """take a list of prices and give back the ranage within 'ranges' that
+       we should use for plotting
+    """
+    _min = len(ranges) + 1
+    _max = -1
+    for p in prices:
+        idx = p//100
+        if idx < _min:
+            _min = idx
+        if idx > _max:
+            _max = idx
+    return int(_min), int(_max)
+
+
