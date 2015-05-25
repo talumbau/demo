@@ -18,7 +18,7 @@ from numpy import pi
 import pandas as pd
 import shoes_func
 
-from bokeh.models import ColumnDataSource, Plot, HoverTool, TapTool
+from bokeh.models import ColumnDataSource, Plot, HoverTool, TapTool, Callback
 from bokeh.plotting import figure, curdoc
 from bokeh.charts import Bar, output_file, show, Histogram
 from bokeh.properties import String, Instance
@@ -68,6 +68,8 @@ bottoms = []
 fills = []
 height = [0.5] * len(_shoedf['price'])
 width = [0.5] * len(_shoedf['price'])
+brand_height = [1.0] * len(_shoedf['price'])
+brand_width = [1.0] * len(_shoedf['price'])
 
 brand_aves = shoes_func.average_price_per_brand(b2p)
 splitters = [100, 250, 300, 500, 750, 900, 1400, 1800, 2000, 3000, 9999]
@@ -101,7 +103,9 @@ _shoedf['tops'] = tops
 _shoedf['fills'] = fills
 _shoedf['yvals'] = yvals
 _shoedf['height'] = height
+_shoedf['brand_height'] = brand_height
 _shoedf['width'] = width
+_shoedf['brand_width'] = brand_width
 _shoedf['brand_y'] = brand_y
 
 
@@ -153,16 +157,38 @@ class ShoeApp(VBox):
 
     def make_source(self):
         self.source = ColumnDataSource(data=self.df)
+        self.source.callback = Callback(args=dict(), code="""
+
+            var inds = cb_obj.get('selected')['1d'].indices;
+            var theidx = inds[0];
+            var d1 = cb_obj.get("data");
+            var brand = d1["brand"][theidx];
+
+            console.log("yep");
+            console.log(theidx);
+            $.get( "shoes", {id: brand}, function( response ) {
+
+                console.log("logging rep");
+                console.log(response);
+                console.log("done logging rep");
+                $( "#child" ).html( response );
+            }, "html");
+            console.log("done");
+
+        """)
+
+
+
         self.make_brand_source()
 
     def make_brand_source(self):
         self.brand_source = ColumnDataSource(data=self.brand_df)
 
+
     def configure_brand_source(self, min_idx=0, max_idx=MAX_IDX):
         bdf = self.brand_df
         min_idx, max_idx = shoes_func.min_max_range(ranges, bdf['price'])
         counts = [0] * (max_idx - min_idx + 1)
-        import pdb;pdb.set_trace()
         for i in bdf.index:
             ans = bdf.ix[i]
             #idx = int(ans['price'] + 100)//100 + 1
@@ -171,7 +197,8 @@ class ShoeApp(VBox):
             print "price is ", ans['price']
             #Categorical stuff
             #xcat.append(ranges[idx-2])
-            _shoedf.loc[i, 'brand_y'] = (counts[idx - min_idx] - 0.5*counts[idx - min_idx])
+            #_shoedf.loc[i, 'brand_y'] = (counts[idx - min_idx] - 0.5*counts[idx - min_idx])
+            _shoedf.loc[i, 'brand_y'] = (counts[idx - min_idx]) + 0.5
             counts[idx - min_idx] = counts[idx - min_idx] + 1
             #quad stuff
             #xvals.append(idx - 0.25)
@@ -210,7 +237,6 @@ class ShoeApp(VBox):
 
     def make_brand_plot(self, min_idx=0, max_idx=MAX_IDX):
 
-        import pdb;pdb.set_trace()
         TOOLS = "box_select,lasso_select"
         tooltips = "<span class='tooltip-text'>Name: @name</span>\n<br>"
         tooltips += "<span class='tooltip-text'>Brand: @brand</span>\n<br>"
@@ -232,7 +258,7 @@ class ShoeApp(VBox):
         p.xaxis.major_label_orientation = pi/4
 
         #p.quad(left='xvals', right='rightvals', top='tops', bottom='bottoms', color='fills', source=self.dfsource)
-        p.rect(x='xcat', y='brand_y', width='width', height='height', color='fills', source=self.brand_source)
+        p.rect(x='xcat', y='brand_y', line_color='black', width='width', height='brand_height', color='fills', source=self.brand_source)
         p.add_tools(hover)
 
         self.brand_plot = p
@@ -263,7 +289,6 @@ class ShoeApp(VBox):
         #self.make_brand_plot
         #self.set_children()
         #curdoc().add(self)
-        import pdb;pdb.set_trace()
         bdf = self.brand_df
         min_idx, max_idx = shoes_func.min_max_range(ranges, bdf['price'])
         self.configure_brand_source(min_idx, max_idx)
