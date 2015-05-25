@@ -32,6 +32,9 @@ def get_some_counties():
 
 
 def color_counties(hdata, county_data):
+
+    color_palette = list(reversed(RdYlGn6))
+
     name_count = defaultdict(int)
     name_ratings = {}
     #['color', 'xs', 'state', 'ys', 'names']
@@ -86,10 +89,10 @@ def color_counties(hdata, county_data):
             for idx, cut in enumerate(cutoffs):
                 if cut >= ave:
                     #print "the ave is ", ave, "so idx is ", idx
-                    colors.append(RdYlGn6[idx])
+                    colors.append(color_palette[idx])
                     break
         else:
-            colors.append(RdYlGn6[0])
+            colors.append(color_palette[0])
 
 
     county_data['thecolors'] = colors

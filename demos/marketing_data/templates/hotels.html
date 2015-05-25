@@ -4,8 +4,9 @@
         <style>
         #header {
             background-color:grey;
+            font-family: Arial, Helvetica, sans-serif;
             color:white;
-            text-align:center;
+            text-align:left;
             padding:5px;
         }
         #nav {
@@ -17,13 +18,13 @@
             padding:5px;          
         }
         #section {
-            background-color:pink;
+            background-color:gray;
             width:1100px;
             float:center;
             padding:10px;        
         }
         #section2 {
-            background-color:orange;
+            background-color:LightGray;
             width:1100px;
             height:250px;
             float:center;
@@ -56,6 +57,9 @@
         </script>
     </head>
     <body>
+    <div id="header">
+        <h1> Hotel Review Explorer </h1>
+    </div>
     <div id="section">
         {{ app_tag|indent(8)|safe }}
     </div>

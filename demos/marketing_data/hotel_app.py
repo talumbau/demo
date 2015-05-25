@@ -57,30 +57,10 @@ def return_hotel_reviews():
 
 colors = ["#F1EEF6", "#D4B9DA", "#C994C7", "#DF65B0", "#DD1C77", "#980043"]
 
-def get_data():
-    n = ['AAA', 'BBB', 'CCC']
-    lat=[30.2861, 30.2855, 30.2869]
-    lon=[-97.7394, -97.7390, -97.7405]
-    city = ["Austin", "Austin", "Austin"]
-    ratings=[3.5, 4.5, 2.5]
-    num_reviews=[10, 11, 12]
-    fill=["yellow"] * 3
-    fill2=["green"] * 3
-    return pd.DataFrame({'names':n, 'lat':lat, 'lon':lon,
-                         'ratings':ratings,
-                         'fill':fill,
-                         'fill2':fill2,
-                         'city':city,
-                         'num_reviews':num_reviews})
-
 
 class HotelApp(VBox):
     extra_generated_classes = [["HotelApp", "HotelApp", "VBox"]]
     jsmodel = "VBox"
-
-    # text reviews
-    #pretext = Instance(Paragraph)
-
 
     # input
     selectr = Instance(Select)
@@ -173,23 +153,6 @@ class HotelApp(VBox):
         return pandas_df
 
 
-    def write_text(self):
-        sdf = self.selected_df
-        ids = sdf['id'].values
-        revs = return_hotel_reviews()
-        rev = "Review #1: \n"
-        rev += revs[ids[0]][0]
-        print "rev is ", rev
-        text = '<div id="section3">\n'
-        text += '<p>\n'
-        text += rev
-        text += '</p>'
-        text += '</div>'
-        
-        #self.pretext.text = rev
-        #self.pretext.text = text
-
-
     def make_source(self):
         self.source = ColumnDataSource(data=self.df)
         self.source.callback = Callback(args=dict(), code="""
@@ -206,8 +169,28 @@ class HotelApp(VBox):
         """)
 
 
+    def update_source(self):
+        if self.selectr.value is None or self.selectr.value == 'Choose A State':
+            df = hdata
+        else:
+            df = hdata[hdata['state'] == self.selectr.value]
+
+        for col in df:
+            self.source.data[col] = df[col]
+
     def make_county_source(self):
         self.county_source = ColumnDataSource(data=self.countydf)
+
+    def update_county_source(self):
+        if self.selectr.value is None or self.selectr.value == 'Choose A State':
+            df = county_data
+        else:
+            df = county_data[county_data['state'] == self.selectr.value]
+
+        for col in df:
+            self.county_source.data[col] = df[col]
+
+
 
     """def init_check_group(self):
 
@@ -218,13 +201,12 @@ class HotelApp(VBox):
         print "radio group handler %s" % active"""
 
     def make_plots(self):
-        self.create_plots()
+        self.create_map_plot()
         self.populate_glyphs()
         self.make_bar_plot()
 
-    #def make_plots(self, lat, lng, zoom, xr, yr):
     #def make_plots(self):
-    def create_plots(self):
+    def create_map_plot(self):
         lat=39.8282
         lng=-98.5795
         zoom=6
@@ -349,7 +331,7 @@ class HotelApp(VBox):
     def set_children(self):
         self.children = [self.totalbox]
         self.totalbox.children = [self.mainrow]
-        self.mainrow.children = [self.plot, self.statsbox]
+        self.mainrow.children = [self.statsbox, self.plot]
         self.statsbox.children = [self.selectr, self.check_group, self.bar_plot]
         #self.bottomrow.children = [self.pretext]
 
@@ -360,7 +342,6 @@ class HotelApp(VBox):
             self.source.on_change('selected', self, 'selection_change')
         if self.selectr:
             self.selectr.on_change('value', self, 'input_change')
-            #self.selectr.on_change('value', self, 'selection_change')
         if self.check_group:
             self.check_group.on_change('active', self, 'check_change')
 
@@ -385,6 +366,7 @@ class HotelApp(VBox):
 
     def selection_change(self, obj, attrname, old, new):
         #self.make_source()
+        self.update_source()
         self.make_bar_plot()
         self.set_children()
         curdoc().add(self)
@@ -407,13 +389,18 @@ class HotelApp(VBox):
         curdoc().add(self)
 
     def input_change(self, obj, attrname, old, new):
-        #if obj == self.selectr:
-            #self.select_val = new
-        #self.make_source()
-        #self.make_county_source()
+        #import pdb;pdb.set_trace()
+        print "source len: ", len(self.source.data['state'])
+        print "county len: ", len(self.county_source.data['names'])
         self.update_source()
         self.update_county_source()
-        #self.populate_glyphs()
+        print "source len: ", len(self.source.data['state'])
+        print "county len: ", len(self.county_source.data['names'])
+        if self.selectr.value is None or self.selectr.value == 'Choose A State':
+            pass
+        else:
+            self.plot.title = self.selectr.value
+
 
         self.set_children()
         curdoc().add(self)

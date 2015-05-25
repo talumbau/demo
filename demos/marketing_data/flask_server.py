@@ -54,13 +54,12 @@ def some_reviews():
     print("getting stuff here")
     _id = request.args.get('id','')
     rev = ""
-    for i, r in enumerate(hrevs[int(_id)]):
-        rev += "Review #%d: <br>" % (i + 1)
-        rev += r + "<br>"
+    if _id:
+        for i, r in enumerate(hrevs[int(_id)]):
+            rev += "Review #%d: <br>" % (i + 1)
+            rev += r + "<br>"
 
-    #self.pretext.text = rev
     return rev
-
 
 
 
