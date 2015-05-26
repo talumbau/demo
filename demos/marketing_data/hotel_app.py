@@ -175,8 +175,11 @@ class HotelApp(VBox):
         else:
             df = hdata[hdata['state'] == self.selectr.value]
 
+        new_data = {}
         for col in df:
-            self.source.data[col] = df[col]
+            new_data[col] = df[col]
+
+        self.source.data = new_data
 
     def make_county_source(self):
         self.county_source = ColumnDataSource(data=self.countydf)
@@ -187,9 +190,13 @@ class HotelApp(VBox):
         else:
             df = county_data[county_data['state'] == self.selectr.value]
 
+        new_data = {}
         for col in df:
-            self.county_source.data[col] = df[col]
+            new_data[col] = df[col]
 
+        self.county_source.data = new_data
+        #for col in df:
+        #    self.county_source.data[col] = df[col]
 
 
     """def init_check_group(self):
@@ -402,8 +409,8 @@ class HotelApp(VBox):
             self.plot.title = self.selectr.value
 
 
-        self.set_children()
-        curdoc().add(self)
+        #self.set_children()
+        #curdoc().add(self)
 
 
 # The following code adds a "/bokeh/hotel/" url to the bokeh-server. This URL

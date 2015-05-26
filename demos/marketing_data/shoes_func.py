@@ -107,7 +107,7 @@ def _get_all_shoes(alllines):
             brand.append(thebrand)
 
     df = pd.DataFrame({'name':name, 'price':price, 'brand':brand})
-    return df.loc[:800, :]
+    return df.loc[:1200, :]
 
 def make_brands_to_prices(df):
 

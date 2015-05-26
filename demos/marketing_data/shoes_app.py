@@ -187,7 +187,8 @@ class ShoeApp(VBox):
 
     def configure_brand_source(self, min_idx=0, max_idx=MAX_IDX):
         bdf = self.brand_df
-        min_idx, max_idx = shoes_func.min_max_range(ranges, bdf['price'])
+        #min_idx, max_idx = shoes_func.min_max_range(ranges, bdf['price'])
+        min_idx, max_idx = shoes_func.min_max_range(orig_order, bdf['price'])
         counts = [0] * (max_idx - min_idx + 1)
         for i in bdf.index:
             ans = bdf.ix[i]
@@ -206,6 +207,7 @@ class ShoeApp(VBox):
             #bottoms.append(counts[idx]/2)
             #tops.append(counts[idx] + 0.5)
             #fills.append(brand_to_color[ans['brand']])
+        return None
 
 
 
@@ -253,7 +255,7 @@ class ShoeApp(VBox):
             title = "Brand: " + self.brand_df['brand'].values[0]
         else:
             title = ""
-        brand_ranges = orig_order[min_idx:max_idx]
+        brand_ranges = orig_order[min_idx:max_idx+1]
         p = figure(tools=TOOLS, width=400, height=400, x_range=brand_ranges, title=title)
         p.xaxis.major_label_orientation = pi/4
 
