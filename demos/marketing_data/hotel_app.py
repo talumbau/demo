@@ -93,7 +93,7 @@ class HotelApp(VBox):
         self.selectr = Select(
             name='states',
             value='Choose A State',
-            options=[s[1] for s in states] + ['Choose A State']
+            options=[s[1] for s in states] + ['Choose A State'],
         )
         labels = ["County Averages", "Hotels"]
         self.check_group = CheckboxGroup(labels=labels, active=[0,1])
@@ -227,9 +227,9 @@ class HotelApp(VBox):
         plot = GMapPlot(
             x_range=x_range, y_range=y_range,
             map_options=map_options,
-            title = "Hotel Review Explorer",
             plot_width=680,
-            plot_height=600
+            plot_height=600,
+            title=" "
         )
         plot.map_options.map_type="hybrid"
         xaxis = LinearAxis(axis_label="lon", major_tick_in=0, formatter=NumeralTickFormatter(format="0.000"))
@@ -307,23 +307,31 @@ class HotelApp(VBox):
         bottoms = [0]*len(ratings)
         y_text = [y + 1.0 for y in ratings]
         width = [1.0] * len(ratings)
-        all_names = [n for n in sdf['names']]
-        while len(all_names) < 5:
+        all_names = []
+        for n in sdf['names']:
+            short_name = n[:20]
+            idx = short_name.rfind(" ")
+            all_names.append(short_name[:idx])
+
+        while len(all_names) > 0 and len(all_names) < 5:
             all_names.append("n/a")
 
         bar_plot = figure(tools=TOOLS, width=400, height=350, x_range=all_names, y_range=y_rr, title="Average Rating")
+        bar_plot.title_text_color = "black"
+        bar_plot.title_text_font_size='15pt'
+        bar_plot.title_text_align = "right"
         print "all_names ", all_names
 
         bar_colors = []
         for r in ratings:
             if r >= 4.0:
-                bar_colors.append("green")
+                bar_colors.append("#41ab5d")
             elif r >= 3.0:
-                bar_colors.append("yellow")
+                bar_colors.append("#ffffbf")
             else:
-                bar_colors.append("red")
+                bar_colors.append("#e31a1c")
 
-        bar_plot.xaxis.major_label_orientation = pi/4
+        bar_plot.xaxis.major_label_orientation = pi/2.3
         bar_plot.rect(x=all_names, y=centers, width=width, height=ratings, color=bar_colors, line_color="black")
 
         #glyph = Text(x=xvals, y=y_text, text=sdf['names'], angle=pi/4,
