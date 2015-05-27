@@ -294,10 +294,8 @@ class HotelApp(VBox):
 
     def make_bar_plot(self):
         # create a new plot
-        x_rr = Range1d(start=0.0, end=6.0)
-        y_rr = Range1d(start=0.0, end=10.0)
+        y_rr = Range1d(start=0.0, end=5.0)
         TOOLS = "box_select,lasso_select"
-        bar_plot = figure(tools=TOOLS, width=400, height=350, x_range=x_rr, y_range=y_rr, title="Average Rating")
 
         #x's and y's based on selected_df
         sdf = self.selected_df[['names', 'ratings']]
@@ -305,28 +303,27 @@ class HotelApp(VBox):
         xvals = [1.0*i + 0.5 for i in range(0, len(sdf['names']))]
         rightvals = [1.0*i + 0.85 for i in range(0, len(sdf['names']))]
         ratings = [r for r in sdf['ratings']]
+        centers = [0.5*r for r in ratings]
         bottoms = [0]*len(ratings)
         y_text = [y + 1.0 for y in ratings]
+        width = [1.0] * len(ratings)
         all_names = [n for n in sdf['names']]
 
+        bar_plot = figure(tools=TOOLS, width=400, height=350, x_range=all_names, y_range=y_rr, title="Average Rating")
         print "all_names ", all_names
 
-        #bar_plot.circle(xvals, ratings, size=12)
-        bar_plot.quad(xvals, rightvals, ratings, bottoms, fill="teal")
+        bar_plot.xaxis.major_label_orientation = pi/4
+        bar_plot.rect(x=all_names, y=centers, width=width, height=ratings, color="teal")
 
         #glyph = Text(x=xvals, y=y_text, text=sdf['names'], angle=pi/4,
                     #text_align="left", text_baseline="middle")
 
-        glyphs = [Text(x=x, y=y, text=[n], angle=pi/4, text_align="left", text_baseline="middle") 
-                  for x, y, n in zip(xvals, y_text, all_names)]
+        #glyphs = [Text(x=x, y=y, text=[n], angle=pi/4, text_align="left", text_baseline="middle") 
+                  #for x, y, n in zip(xvals, y_text, all_names)]
                    
-        for g in glyphs:
-            bar_plot.add_glyph(g)
 
         bar_plot.xaxis.major_tick_line_color = None
         bar_plot.xaxis.minor_tick_line_color = None
-        #bar_plot.xaxis.major_tick_line_width = 3
-        #bar_plot.xaxis.minor_tick_line_color = "orange"
 
         bar_plot.yaxis.minor_tick_line_color = None
 
@@ -334,6 +331,7 @@ class HotelApp(VBox):
         bar_plot.xgrid.grid_line_color = None
         bar_plot.ygrid.grid_line_color = None
         self.bar_plot = bar_plot
+
 
     def set_children(self):
         self.children = [self.totalbox]

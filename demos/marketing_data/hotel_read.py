@@ -97,8 +97,8 @@ def read_data(num_lines=-1):
     else:
         unlimited = False
 
-    lines1 = (json.loads(line) for line in open('/Users/talumbau/Downloads/115_1.txt'))
-    lines2 = (json.loads(line) for line in open('/Users/talumbau/Downloads/115_2.txt'))
+    lines1 = (json.loads(line) for line in open('115_1.txt'))
+    lines2 = (json.loads(line) for line in open('115_2.txt'))
     alllines = itertools.chain.from_iterable([lines1, lines2])
 
     static_cols = ["city", "name", "lat", "long", "postalCode", "reviews"]

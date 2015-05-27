@@ -17,8 +17,8 @@ num_prices = 0
 num_brands = 0
 goodones = []
 has_prices = 0
-lines1 = [json.loads(line) for line in open('/Users/talumbau/Downloads/116_1.txt')]
-lines2 = [json.loads(line) for line in open('/Users/talumbau/Downloads/116_2.txt')]
+lines1 = [json.loads(line) for line in open('116_1.txt')]
+lines2 = [json.loads(line) for line in open('116_2.txt')]
 all_ps = []
 
 def extract_full_price(r):
