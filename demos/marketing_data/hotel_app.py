@@ -308,12 +308,23 @@ class HotelApp(VBox):
         y_text = [y + 1.0 for y in ratings]
         width = [1.0] * len(ratings)
         all_names = [n for n in sdf['names']]
+        while len(all_names) < 5:
+            all_names.append("n/a")
 
         bar_plot = figure(tools=TOOLS, width=400, height=350, x_range=all_names, y_range=y_rr, title="Average Rating")
         print "all_names ", all_names
 
+        bar_colors = []
+        for r in ratings:
+            if r >= 4.0:
+                bar_colors.append("green")
+            elif r >= 3.0:
+                bar_colors.append("yellow")
+            else:
+                bar_colors.append("red")
+
         bar_plot.xaxis.major_label_orientation = pi/4
-        bar_plot.rect(x=all_names, y=centers, width=width, height=ratings, color="teal")
+        bar_plot.rect(x=all_names, y=centers, width=width, height=ratings, color=bar_colors, line_color="black")
 
         #glyph = Text(x=xvals, y=y_text, text=sdf['names'], angle=pi/4,
                     #text_align="left", text_baseline="middle")
