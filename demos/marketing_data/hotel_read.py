@@ -150,7 +150,7 @@ def get_hotel_data():
                         'city':dta['city'],
                         'county':dta['county'],
                         'ratings':dta['ave_review'],
-                        'fill':['yellow'] * len(dta['city']),
+                        'fill':['#ffffbf'] * len(dta['city']),
                         'fill2':['purple'] * len(dta['city']),
                         'state':dta['state'],
                         'id':dta['id'],

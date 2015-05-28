@@ -226,8 +226,10 @@ class ShoeApp(VBox):
         #p = figure(tools=TOOLS, width=1100, height=700, title="Price Distribution")
         #p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution", angle=pi/4)
         #p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution")
-        p = figure(tools=TOOLS, width=600, height=1000, y_range=ranges, title="Price Distribution")
+        p = figure(tools=TOOLS, width=600, height=1000, y_range=ranges, title="Price Distribution",
+                   x_axis_location="above")
         p.yaxis.major_label_orientation = pi/4
+
 
         #p.quad(left='xvals', right='rightvals', top='tops', bottom='bottoms', color='fills', source=self.dfsource)
         #p.rect(x='xcat', y='yvals', width='width', height='height', color='fills', source=self.source)
