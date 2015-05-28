@@ -26,6 +26,16 @@ from bokeh.server.app import bokeh_app
 from bokeh.server.utils.plugins import object_page
 from bokeh.models.widgets import HBox, VBox, VBoxForm, PreText, Select
 
+pop_brands = ["gucci", "salvatore", "rag & bone", "balenciaga",
+              "ash", "chloe", "loeffler randall", "rene caovilla",
+              "alexander wang", "lanvin", "alexandre birman",
+              "kate spade new york", "miu miu", "sophia webster",
+              "alberto fermani", "donald j pliner", "vince",
+              "giuseppe zanotti", "michael michael kors",
+              "ugg australia", "gianvito rossi", "saint laurent",
+              "valentino", "tory burch", "prada", "manolo blahnik",
+              "christian louboutin", "jimmy choo", "stuart weitzman"]
+
 ranges = ["< $100", "< $200", "< $300", 
           "< $400", "< $500", "< $600", "< $700", "< $800", "< $900", 
           "< $1000", "< $1100", "< $1200", "< $1300", "< $1400", "< $1500", 
@@ -130,8 +140,12 @@ class ShoeApp(VBox):
     source = Instance(ColumnDataSource)
     brand_source = Instance(ColumnDataSource)
 
+    # select
+    selectr = Instance(Select)
+
     # layout boxes
     totalbox = Instance(HBox)
+    brandbox = Instance(VBox)
 
     def __init__(self, *args, **kwargs):
         super(ShoeApp, self).__init__(*args, **kwargs)
@@ -145,14 +159,26 @@ class ShoeApp(VBox):
         # create layout widgets
         obj = cls()
         obj.totalbox = HBox()
+        obj.brandbox = VBox()
 
         obj.make_source()
         # outputs
         obj.make_better_plots()
 
+        obj.make_inputs()
+
         # layout
         obj.set_children()
         return obj
+
+
+
+    def make_inputs(self):
+        self.selectr = Select(
+            name='brands',
+            value='Most Popular Brands',
+            options=pop_brands + ['Most Popular Brands'],
+        )
 
 
     def make_source(self):
@@ -226,8 +252,8 @@ class ShoeApp(VBox):
         #p = figure(tools=TOOLS, width=1100, height=700, title="Price Distribution")
         #p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution", angle=pi/4)
         #p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution")
-        p = figure(tools=TOOLS, width=600, height=1000, y_range=ranges, title="Price Distribution",
-                   x_axis_location="above")
+        p = figure(tools=TOOLS, width=580, height=1000, y_range=ranges, title="Price Distribution",
+                   x_axis_location="above", toolbar_location=None)
         p.yaxis.major_label_orientation = pi/4
 
 
@@ -258,7 +284,7 @@ class ShoeApp(VBox):
         else:
             title = ""
         brand_ranges = orig_order[min_idx:max_idx+1]
-        p = figure(tools=TOOLS, width=400, height=400, x_range=brand_ranges, title=title)
+        p = figure(tools=TOOLS, width=400, height=400, x_range=brand_ranges, title=title, toolbar_location=None)
         p.xaxis.major_label_orientation = pi/4
 
         #p.quad(left='xvals', right='rightvals', top='tops', bottom='bottoms', color='fills', source=self.dfsource)
@@ -270,7 +296,8 @@ class ShoeApp(VBox):
 
     def set_children(self):
         self.children = [self.totalbox]
-        self.totalbox.children = [self.plot, self.brand_plot]
+        self.totalbox.children = [self.plot, self.brandbox]
+        self.brandbox.children = [self.brand_plot, self.selectr]
         #self.totalbox.children = [self.mainrow, self.bottomrow]
         #self.mainrow.children = [self.plot]
         #self.bottomrow.children = [self.hist_plot, self.selectr]
@@ -288,6 +315,8 @@ class ShoeApp(VBox):
         if self.source:
             self.source.on_change('selected', self, 'selection_change')
 
+        if self.selectr:
+            self.selectr.on_change('value', self, 'brand_change')
 
     def selection_change(self, obj, attrname, old, new):
         #self.make_brand_plot
@@ -300,6 +329,24 @@ class ShoeApp(VBox):
         self.make_brand_plot(min_idx, max_idx)
         self.set_children()
         curdoc().add(self)
+
+    def brand_change(self, obj, attrname, old, new):
+        bdf = self.brand_df
+        if self.selectr.value is None or self.selectr.value == 'Most Popular Brands':
+            return
+        self.update_selected_on_source(self.selectr.value)
+        self.set_children()
+        curdoc().add(self)
+
+    def update_selected_on_source(self, brand):
+        # {'2d': {'indices': []}, '1d': {'indices': []}, '0d': {'indices': [], 'flag': False}}
+        brand_df = _shoedf[ _shoedf['brand'] == brand ]
+
+        new_indices = {'2d': {'indices': []}, '1d': {'indices': []}, '0d': {'indices': [], 'flag': False}}
+        for _id in brand_df.index:
+            new_indices['1d']['indices'].append(_id)
+
+        self.source.selected = new_indices
 
 
     @property

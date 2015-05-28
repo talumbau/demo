@@ -21,7 +21,11 @@ from bokeh.models import (ColumnDataSource, Plot,
     PanTool, WheelZoomTool, BoxSelectTool, HoverTool,
     BoxSelectionOverlay, GMapOptions, FactorRange, TapTool,
     NumeralTickFormatter, PrintfTickFormatter, Callback,
-    CategoricalTickFormatter, CategoricalAxis)
+    CategoricalTickFormatter, CategoricalAxis, Text, Rect)
+
+from chart_constants import PLOT_FORMATS
+from chart_constants import (FONT_PROPS_SM, BLUE, RED, GREEN,
+                              ORANGE, ORANGE_SHADOW)
 
 from bokeh.models.glyphs import Circle, Text
 from bokeh.plotting import figure, curdoc
@@ -70,6 +74,7 @@ class HotelApp(VBox):
     # plots
     plot = Instance(GMapPlot)
     bar_plot = Instance(Plot)
+    legend_plot = Instance(Plot)
 
     # data source
     source = Instance(ColumnDataSource)
@@ -77,8 +82,8 @@ class HotelApp(VBox):
 
     # layout boxes
     mainrow = Instance(HBox)
-    #bottomrow = Instance(HBox)
     statsbox = Instance(VBox)
+    mapbox = Instance(VBox)
     totalbox = Instance(VBox)
 
     # inputs
@@ -116,6 +121,7 @@ class HotelApp(VBox):
         # create layout widgets
         obj = cls()
         obj.mainrow = HBox()
+        obj.mapbox = VBox()
         #obj.bottomrow = HBox()
         obj.statsbox = VBox()
         obj.totalbox = VBox()
@@ -209,10 +215,47 @@ class HotelApp(VBox):
 
     def make_plots(self):
         self.create_map_plot()
+        self.create_legend()
         self.populate_glyphs()
         self.make_bar_plot()
 
-    #def make_plots(self):
+    def create_legend(self):
+        x_range = Range1d(0, 550)
+        y_range = Range1d(0, 38)
+
+        text_box = Plot(
+            x_range=x_range, y_range=y_range, title="", 
+            plot_width=680, plot_height=38, min_border=0, 
+            **PLOT_FORMATS
+        )  
+
+        text_box.add_glyph(
+            Text(x=47, y=15, text=['High Average Rating'],  **FONT_PROPS_SM)
+        )
+        text_box.add_glyph(
+            Text(x=423, y=15, text=['Low Average Rating'], **FONT_PROPS_SM)
+        )
+        text_box.add_glyph(
+            Text(x=235, y=15, text=['Medium Average Rating'], **FONT_PROPS_SM)
+        )
+
+        #GREEN
+        text_box.add_glyph(
+            Rect(x=25, y=20, width=25, height=25, 
+                fill_color="#41ab5d", line_color=None)
+        )
+        #YELLOW
+        text_box.add_glyph(
+            Rect(x=217, y=20, width=25, height=25, 
+                fill_color="#ffffbf", line_color=None)
+        )
+        #RED
+        text_box.add_glyph(
+            Rect(x=402, y=20, width=25, height=25, 
+                fill_color="#e31a1c", line_color=None)
+        )
+        self.legend_plot = text_box
+
     def create_map_plot(self):
         lat=39.8282
         lng=-98.5795
@@ -355,7 +398,8 @@ class HotelApp(VBox):
     def set_children(self):
         self.children = [self.totalbox]
         self.totalbox.children = [self.mainrow]
-        self.mainrow.children = [self.statsbox, self.plot]
+        self.mainrow.children = [self.statsbox, self.mapbox]
+        self.mapbox.children = [self.plot, self.legend_plot]
         self.statsbox.children = [self.selectr, self.check_group, self.bar_plot]
         #self.bottomrow.children = [self.pretext]
 
