@@ -173,6 +173,10 @@ def split_on_prices(prices_and_brands, splits):
 def make_brand_to_color(groups):
     colors = bokeh.palettes.Spectral11
     price_points = sorted(groups.keys())
+    #def ave_price(somelist):
+        #return np.mean([x[0] for x in somelist])
+    #ave_prices = sorted([ (k, ave_price(v)) for k,v in groups.iteritems()])
+    #import pdb;pdb.set_trace()
     price2idx = {r:p for p,r in zip(range(len(price_points)), price_points)}
     b2c = {}
     for price, brands in groups.iteritems():

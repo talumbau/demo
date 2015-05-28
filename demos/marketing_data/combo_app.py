@@ -123,7 +123,7 @@ brand_height = [1.0] * len(_shoedf['price'])
 brand_width = [1.0] * len(_shoedf['price'])
 
 brand_aves = shoes_func.average_price_per_brand(b2p)
-splitters = [100, 250, 300, 500, 750, 900, 1400, 1800, 2000, 3000, 9999]
+splitters = [100, 250, 300, 425, 600, 750, 900, 1150, 1300, 1500, 1700, 3000, 9999]
 groups = shoes_func.split_on_prices(brand_aves, splitters)
 brand_to_color = shoes_func.make_brand_to_color(groups)
 
@@ -321,14 +321,27 @@ class ShoeApp(VBox):
             x_range=x_range, y_range=y_range, title="", 
             plot_width=580, plot_height=30, min_border=0, 
             **PLOT_FORMATS
-        )  
+        )
 
-        for i in range(0,11):
+        prices_aves = ["67 ", "185", "271", "367", "500", "685", "827", "989", "1242", "1354", "1611"]
+
+        text_box.add_glyph(
+                Text(x=2, y=1, text=['Ave:'],  **FONT_PROPS_SMALLER)
+        )
+        text_box.add_glyph(
+            Text(x=24, y=1, text=['$' + prices_aves[0]],  **FONT_PROPS_SMALLER)
+        )
+        text_box.add_glyph(
+            Rect(x=33, y=22, width=23, height=10, 
+            fill_color=Spectral11[0], line_color=None)
+        )
+
+        for i in range(1,11):
             text_box.add_glyph(
-                Text(x=(6 + 52*i), y=1, text=['Ave: $11$'],  **FONT_PROPS_SMALLER)
+                Text(x=(21 + 52*i), y=1, text=['$' + prices_aves[i]],  **FONT_PROPS_SMALLER)
             )
             text_box.add_glyph(
-                Rect(x=29 + 52*i, y=22, width=23, height=10, 
+                Rect(x=33 + 52*i, y=22, width=23, height=10, 
                 fill_color=Spectral11[i], line_color=None)
             )
 
