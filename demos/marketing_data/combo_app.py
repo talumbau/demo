@@ -757,7 +757,7 @@ class HotelApp(VBox):
             all_names.append(short_name[:idx])
 
         while len(all_names) > 0 and len(all_names) < 5:
-            all_names.append("n/a")
+            all_names.append("   ")
 
         bar_plot = figure(tools=TOOLS, width=400, height=350, x_range=all_names, y_range=y_rr, title="Average Rating")
         bar_plot.title_text_color = "black"
