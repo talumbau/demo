@@ -700,27 +700,7 @@ class HotelApp(VBox):
         yaxis = LinearAxis(axis_label="lat", major_tick_in=0, formatter=PrintfTickFormatter(format="%.3f"))
         plot.add_layout(yaxis, 'left')
 
-        #pan = PanTool()
-        #wheel_zoom = WheelZoomTool()
-        #box_select = BoxSelectTool()
-        #box_select.renderers = [rndr]
-        #tooltips = "@name"
-        #tooltips = "<span class='tooltip-text'>@names</span>\n<br>"
-        #tooltips += "<span class='tooltip-text'>Reviews: @num_reviews</span>"
-        #hover = HoverTool(tooltips="@num_reviews")
-        #hover = HoverTool(tooltips="@names")
-        #hover = HoverTool(tooltips=tooltips)
-        #tap = TapTool()
-        #plot.add_tools(pan, wheel_zoom, box_select, hover, tap)
-        #plot.add_tools(hover, tap)
-        #overlay = BoxSelectionOverlay(tool=box_select)
-        #plot.add_layout(overlay)
-        #plot.add_glyph(self.source, circle)
-        #county_xs, county_ys = get_some_counties()
-        #apatch = Patch(x=county_xs, y=county_ys, fill_color=['white']*len(county_xs))
-        #plot.add_glyph(apatch)
         self.plot = plot
-
 
     def populate_glyphs(self):
         self.plot.renderers=[]
@@ -820,9 +800,9 @@ class HotelApp(VBox):
         self.children = [self.totalbox]
         self.totalbox.children = [self.mainrow]
         self.mainrow.children = [self.statsbox, self.mapbox]
-        self.mapbox.children = [self.checkbox, self.plot]
-        self.checkbox.children = [self.filler, self.check_group, self.filler2]
-        self.statsbox.children = [self.selectr, self.bar_plot, self.legendbox]
+        self.mapbox.children = [self.plot]
+        #self.checkbox.children = [self.filler, self.check_group, self.filler2]
+        self.statsbox.children = [self.bar_plot, self.legendbox]
         self.legendbox.children = [self.legend_filler, self.legend_plot]
         #self.bottomrow.children = [self.pretext]
 

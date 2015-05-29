@@ -90,7 +90,7 @@ def some_reviews():
     rev = ""
     if _id:
         for i, r in enumerate(hrevs[int(_id)]):
-            rev += "Review #%d: <br>" % (i + 1)
+            rev += "<h2>Review #%d: </h2> <br>" % (i + 1)
             rev += r + "<br>"
 
     return rev
