@@ -1,7 +1,7 @@
 import json
 from collections import defaultdict
 from bokeh.palettes import Blues6, RdYlGn6
-PALETTE = ['#743184', '#743184', '#14a1af', '#14a1af', '#ef4e4d', '#ef4e4d']
+PALETTE = ['#ef4e4d', '#ef4e4d', '#14a1af', '#14a1af', '#743184', '#743184'] 
 import numpy as np
 
 def get_some_counties():
