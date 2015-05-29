@@ -75,8 +75,8 @@ def some_shoes():
     report = ""
     bdf = _shoedf[ _shoedf['brand'] == _id]
     if len(bdf) > 0:
-        report += "<h2>Product list for: " + str(bdf.iloc[0]['brand'])
-        report += "</h2><br>"
+        report += "<h3>Product list for: " + str(bdf.iloc[0]['brand'])
+        report += "</h3><br>"
     for idx, s in bdf.iterrows():
         report += str(s['name']) + " : " + str(s['price']) + " <br>"
 

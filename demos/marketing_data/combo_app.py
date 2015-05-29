@@ -185,11 +185,13 @@ class ShoeApp(VBox):
 
     # select
     selectr = Instance(Select)
+    selectr_filler = Instance(Plot)
 
     # layout boxes
     bigbox = Instance(VBox)
     totalbox = Instance(HBox)
     brandbox = Instance(VBox)
+    selectrbox = Instance(HBox)
 
     def __init__(self, *args, **kwargs):
         super(ShoeApp, self).__init__(*args, **kwargs)
@@ -202,9 +204,10 @@ class ShoeApp(VBox):
         """
         # create layout widgets
         obj = cls()
-        obj.bigbox = VBox()
+        obj.bigbox = VBox(width=670)
         obj.totalbox = HBox()
         obj.brandbox = VBox()
+        obj.selectrbox = HBox()
 
         obj.make_source()
         # outputs
@@ -219,10 +222,19 @@ class ShoeApp(VBox):
 
 
     def make_inputs(self):
+        x_range = Range1d(0, 30)
+        y_range = Range1d(0, 12)
+        self.selectr_filler = Plot(
+            x_range=x_range, y_range=y_range, title="", 
+            plot_width=30, plot_height=12, min_border=0, 
+            **PLOT_FORMATS
+        )  
+
+
         self.selectr = Select(
             name='brands',
-            value='Most Popular Brands',
-            options=pop_brands + ['Most Popular Brands'],
+            value='Select A Brand',
+            options=pop_brands + ['Select A Brand'],
         )
 
 
@@ -300,6 +312,7 @@ class ShoeApp(VBox):
         p = figure(tools=TOOLS, width=580, height=1000, y_range=ranges,
                    x_axis_location="above", toolbar_location=None)
         p.yaxis.major_label_orientation = pi/4
+        p.yaxis.axis_label_text_font = 'Avenir'
 
 
         #p.quad(left='xvals', right='rightvals', top='tops', bottom='bottoms', color='fills', source=self.dfsource)
@@ -354,22 +367,19 @@ class ShoeApp(VBox):
         tooltips = "<span class='tooltip-text'>Name: @name</span>\n<br>"
         tooltips += "<span class='tooltip-text'>Brand: @brand</span>\n<br>"
         tooltips += "<span class='tooltip-text'>Price: @price</span>\n<br>"
-        #hover = HoverTool(tooltips="@num_reviews")
-        #hover = HoverTool(tooltips="@names")
         hover = HoverTool(tooltips=tooltips)
 
-        #p = figure(tools=TOOLS, width=1100, height=700, x_range=x_rr, y_range=y_rr, title="Price Distribution")
-        #p = figure(tools=TOOLS, width=1100, height=700, title="Price Distribution")
-        #p = figure(tools=TOOLS, width=1100, height=700, x_range=ranges, title="Price Distribution", angle=pi/4)
         bdf = self.brand_df
         if len(bdf) > 0:
             title = "Brand: " + self.brand_df['brand'].values[0]
         else:
             title = ""
         brand_ranges = orig_order[min_idx:max_idx+1]
-        p = figure(tools=TOOLS, width=400, height=400, x_range=brand_ranges, title=title, toolbar_location=None)
+        p = figure(tools=TOOLS, width=420, height=400, x_range=brand_ranges, title=title, toolbar_location=None)
         p.xaxis.major_label_orientation = pi/4
 
+        p.title_text_font='Avenir'
+        p.title_text_font_size='14pt'
         #p.quad(left='xvals', right='rightvals', top='tops', bottom='bottoms', color='fills', source=self.dfsource)
         p.rect(x='xcat', y='brand_y', line_color='black', width='width', height='brand_height', color='fills', source=self.brand_source)
         p.add_tools(hover)
@@ -381,7 +391,8 @@ class ShoeApp(VBox):
         self.children = [self.totalbox]
         self.totalbox.children = [self.bigbox, self.brandbox]
         self.bigbox.children = [self.legend_plot, self.plot]
-        self.brandbox.children = [self.brand_plot, self.selectr]
+        self.brandbox.children = [self.selectrbox, self.brand_plot]
+        self.selectrbox.children = [self.selectr_filler, self.selectr]
         #self.totalbox.children = [self.mainrow, self.bottomrow]
         #self.mainrow.children = [self.plot]
         #self.bottomrow.children = [self.hist_plot, self.selectr]
@@ -416,7 +427,7 @@ class ShoeApp(VBox):
 
     def brand_change(self, obj, attrname, old, new):
         bdf = self.brand_df
-        if self.selectr.value is None or self.selectr.value == 'Most Popular Brands':
+        if self.selectr.value is None or self.selectr.value == 'Select A Brand':
             return
         self.update_selected_on_source(self.selectr.value)
         self.set_children()
