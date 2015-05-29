@@ -1,6 +1,7 @@
 import json
 from collections import defaultdict
 from bokeh.palettes import Blues6, RdYlGn6
+PALETTE = ['#743184', '#743184', '#14a1af', '#14a1af', '#ef4e4d', '#ef4e4d']
 import numpy as np
 
 def get_some_counties():
@@ -33,7 +34,7 @@ def get_some_counties():
 
 def color_counties(hdata, county_data):
 
-    color_palette = list(reversed(RdYlGn6))
+    color_palette = PALETTE
 
     name_count = defaultdict(int)
     name_ratings = {}

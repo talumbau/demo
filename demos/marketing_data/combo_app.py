@@ -465,17 +465,22 @@ class HotelApp(VBox):
 
     # plots
     plot = Instance(GMapPlot)
+    filler = Instance(Plot)
+    filler2 = Instance(Plot)
     bar_plot = Instance(Plot)
     legend_plot = Instance(Plot)
+    legend_filler = Instance(Plot)
 
     # data source
     source = Instance(ColumnDataSource)
     county_source = Instance(ColumnDataSource)
 
     # layout boxes
+    checkbox = Instance(VBox)
     mainrow = Instance(HBox)
     statsbox = Instance(VBox)
     mapbox = Instance(VBox)
+    legendbox = Instance(HBox)
     totalbox = Instance(VBox)
 
     # inputs
@@ -493,7 +498,25 @@ class HotelApp(VBox):
             options=[s[1] for s in states] + ['Choose A State'],
         )
         labels = ["County Averages", "Hotels"]
-        self.check_group = CheckboxGroup(labels=labels, active=[0,1])
+        self.check_group = CheckboxGroup(labels=labels, active=[0,1], inline=True)
+        ##Filler plot
+        x_range = Range1d(0, 300)
+        y_range = Range1d(0, 12)
+        self.filler = Plot(
+            x_range=x_range, y_range=y_range, title="", 
+            plot_width=300, plot_height=12, min_border=0, 
+            **PLOT_FORMATS
+        )  
+        x_range = Range1d(0, 300)
+        y_range = Range1d(0, 18)
+        self.filler2 = Plot(
+            x_range=x_range, y_range=y_range, title="", 
+            plot_width=300, plot_height=14, min_border=0, 
+            **PLOT_FORMATS
+        )  
+
+
+
 
     def make_outputs(self):
         pass
@@ -513,10 +536,12 @@ class HotelApp(VBox):
         # create layout widgets
         obj = cls()
         obj.mainrow = HBox()
+        obj.checkbox = VBox(height=50)
         obj.mapbox = VBox()
         #obj.bottomrow = HBox()
-        obj.statsbox = VBox()
+        obj.statsbox = VBox( width=500)
         obj.totalbox = VBox()
+        obj.legendbox = HBox()
 
         labels = ["County Average Ratings", "Hotel Locations"]
         obj.make_inputs()
@@ -597,14 +622,6 @@ class HotelApp(VBox):
         #    self.county_source.data[col] = df[col]
 
 
-    """def init_check_group(self):
-
-        print "initing radio group"
-        self.check_group.on_click(self.check_group_handler)
-
-    def check_group_handler(self, active):
-        print "radio group handler %s" % active"""
-
     def make_plots(self):
         self.create_map_plot()
         self.create_legend()
@@ -612,41 +629,52 @@ class HotelApp(VBox):
         self.make_bar_plot()
 
     def create_legend(self):
-        x_range = Range1d(0, 550)
-        y_range = Range1d(0, 38)
+
+        x_range = Range1d(0, 185)
+        y_range = Range1d(0, 130)
 
         text_box = Plot(
             x_range=x_range, y_range=y_range, title="", 
-            plot_width=680, plot_height=38, min_border=0, 
+            plot_width=185, plot_height=130, min_border=0, 
             **PLOT_FORMATS
         )  
 
+        FONT_PROPS_SM['text_font_size'] = '11pt'
         text_box.add_glyph(
-            Text(x=47, y=15, text=['High Average Rating'],  **FONT_PROPS_SM)
+            Text(x=35, y=9, text=['Low Average Rating'],  **FONT_PROPS_SM)
         )
         text_box.add_glyph(
-            Text(x=423, y=15, text=['Low Average Rating'], **FONT_PROPS_SM)
+            Rect(x=18, y=18, width=25, height=25, 
+                fill_color='#ef4e4d', line_color=None)
         )
         text_box.add_glyph(
-            Text(x=235, y=15, text=['Medium Average Rating'], **FONT_PROPS_SM)
+            Text(x=35, y=49, text=['Medium Average Rating'],  **FONT_PROPS_SM)
+        )
+        text_box.add_glyph(
+            Rect(x=18, y=58, width=25, height=25, 
+                fill_color='#14a1af', line_color=None)
         )
 
-        #GREEN
         text_box.add_glyph(
-            Rect(x=25, y=20, width=25, height=25, 
-                fill_color="#41ab5d", line_color=None)
+            Text(x=35, y=89, text=['High Average Rating'],  **FONT_PROPS_SM)
         )
-        #YELLOW
         text_box.add_glyph(
-            Rect(x=217, y=20, width=25, height=25, 
-                fill_color="#ffffbf", line_color=None)
+            Rect(x=18, y=98, width=25, height=25, 
+                fill_color='#743184', line_color=None)
         )
-        #RED
-        text_box.add_glyph(
-            Rect(x=402, y=20, width=25, height=25, 
-                fill_color="#e31a1c", line_color=None)
-        )
+
         self.legend_plot = text_box
+
+        ##Filler plot
+        x_range = Range1d(0, 40)
+        y_range = Range1d(0, 100)
+        self.legend_filler = Plot(
+            x_range=x_range, y_range=y_range, title="", 
+            plot_width=40, plot_height=100, min_border=0, 
+            **PLOT_FORMATS
+        )  
+ 
+
 
     def create_map_plot(self):
         lat=39.8282
@@ -707,10 +735,10 @@ class HotelApp(VBox):
 
         if self._show_hotels:
             print "showing you the hotels"
-            circle2 = Circle(x="lon", y="lat", size=10, fill_color="fill2", fill_alpha=1.0, line_alpha=0.0)
+            circle2 = Circle(x="lon", y="lat", size=10, fill_color="fill2", fill_alpha=1.0, line_color="black")
             circle = Circle(x="lon", y="lat", size=10, fill_color="fill", fill_alpha=1.0, line_color="black")
             #print "source is ", self.source['lon'], self.source['lat'], self.source['f1ll']
-            self.plot.add_glyph(self.source, circle, nonselection_glyph=circle2, name='hotels')
+            self.plot.add_glyph(self.source, circle2, nonselection_glyph=circle, name='hotels')
             #county_xs, county_ys = get_some_counties()
 
         rndr = self.plot.renderers[-1]
@@ -754,17 +782,18 @@ class HotelApp(VBox):
         bar_plot = figure(tools=TOOLS, width=400, height=350, x_range=all_names, y_range=y_rr, title="Average Rating")
         bar_plot.title_text_color = "black"
         bar_plot.title_text_font_size='15pt'
+        bar_plot.title_text_font='Avenir'
         bar_plot.title_text_align = "right"
         print "all_names ", all_names
 
         bar_colors = []
         for r in ratings:
             if r >= 4.0:
-                bar_colors.append("#41ab5d")
+                bar_colors.append("#743184")
             elif r >= 3.0:
-                bar_colors.append("#ffffbf")
+                bar_colors.append("#14a1af")
             else:
-                bar_colors.append("#e31a1c")
+                bar_colors.append("#ef4e4d")
 
         bar_plot.xaxis.major_label_orientation = pi/2.3
         bar_plot.rect(x=all_names, y=centers, width=width, height=ratings, color=bar_colors, line_color="black")
@@ -791,8 +820,10 @@ class HotelApp(VBox):
         self.children = [self.totalbox]
         self.totalbox.children = [self.mainrow]
         self.mainrow.children = [self.statsbox, self.mapbox]
-        self.mapbox.children = [self.plot, self.legend_plot]
-        self.statsbox.children = [self.selectr, self.check_group, self.bar_plot]
+        self.mapbox.children = [self.checkbox, self.plot]
+        self.checkbox.children = [self.filler, self.check_group, self.filler2]
+        self.statsbox.children = [self.selectr, self.bar_plot, self.legendbox]
+        self.legendbox.children = [self.legend_filler, self.legend_plot]
         #self.bottomrow.children = [self.pretext]
 
 

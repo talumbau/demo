@@ -6,6 +6,10 @@ import itertools
 import numpy as np
 import pandas as pd
 
+import bokeh.palettes
+
+BLUE = bokeh.palettes.YlGnBu8[2]
+
 zip_to_state = {}
 zip_to_county = {}
 with open("US.txt") as f:
@@ -150,8 +154,8 @@ def get_hotel_data():
                         'city':dta['city'],
                         'county':dta['county'],
                         'ratings':dta['ave_review'],
-                        'fill':['#ffffbf'] * len(dta['city']),
-                        'fill2':['purple'] * len(dta['city']),
+                        'fill':['black'] * len(dta['city']),
+                        'fill2':[BLUE] * len(dta['city']),
                         'state':dta['state'],
                         'id':dta['id'],
                         'num_reviews':dta['num_reviews']})
